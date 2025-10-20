@@ -279,6 +279,92 @@ SLACK_WEBHOOK_URL
 3. 프로덕션을 위해 모든 환경 변수 설정 확인
 4. 서비스 시작 전 마이그레이션 실행
 
+## 코딩 스타일 가이드
+
+### 명명 규칙
+
+- **변수/함수/메서드**: camelCase
+
+  ```typescript
+  const userId = 123;
+  function getUserData() { }
+  async createEndpoint() { }
+  ```
+
+- **클래스/인터페이스**: PascalCase
+
+  ```typescript
+  class EndpointService { }
+  interface CreateEndpointDto { }
+  ```
+
+- **상수**: UPPER_SNAKE_CASE
+
+  ```typescript
+  const MAX_RETRIES = 3;
+  const DEFAULT_TIMEOUT = 5000;
+  ```
+
+- **파일명**:
+  - 엔티티: `*.entity.ts` (예: `endpoint.entity.ts`)
+  - DTO: `*.dto.ts` (예: `create-endpoint.dto.ts`)
+  - 서비스: `*.service.ts` (예: `endpoint.service.ts`)
+  - 컨트롤러: `*.controller.ts` (예: `endpoint.controller.ts`)
+  - 테스트: `*.spec.ts` (예: `endpoint.service.spec.ts`)
+
+### SOLID 원칙 준수
+
+- **Single Responsibility**: 각 클래스/함수는 하나의 책임만 가짐
+- **Open/Closed**: 확장에는 열려있고 수정에는 닫혀있음
+- **Interface Segregation**: 불필요한 인터페이스 의존 금지
+- **Dependency Inversion**: 구체화가 아닌 추상화에 의존
+
+### 코드 품질 원칙
+
+- **DRY (Don't Repeat Yourself)**: 중복 코드 제거
+- **KISS (Keep It Simple, Stupid)**: 단순한 설계 우선
+- **YAGNI (You Aren't Gonna Need It)**: 필요한 것만 구현
+
+### 구현 완결성
+
+- ❌ 부분 기능 구현 금지 (시작하면 완성하기)
+- ❌ TODO 주석 금지 (핵심 기능에 대해서는 구현 필수)
+- ❌ Mock/Stub 구현 금지 (실제 동작하는 코드만)
+- ❌ Not implemented 에러 금지 (모든 함수는 동작 가능해야 함)
+
+### 코드 조직화
+
+- 관련 기능끼리 모듈로 묶기
+- 파일은 기능 중심으로 구성 (폴더 타입 중심 ❌)
+- 계층적 구조 명확히 (models → services → controllers)
+- 공통 로직은 `common/` 디렉토리에 배치
+
+### TypeScript 타입 안정성
+
+```typescript
+// ✅ 좋음: 명시적 타입 지정
+function processEndpoint(endpoint: Endpoint): CheckResult {
+  // ...
+}
+
+// ❌ 피하기: any 타입 사용
+function processEndpoint(endpoint: any) {
+  // ...
+}
+```
+
+### 에러 처리
+
+- 모든 에러는 명확한 메시지와 함께 throw
+- try-catch 사용 시 구체적인 에러 핸들링
+- NestJS Exception Filters 활용하여 일관된 에러 응답
+
+### 테스트 작성
+
+- 모든 서비스/컨트롤러는 `.spec.ts` 테스트 파일 필수
+- 양성/음성 케이스 모두 테스트
+- Mock 데이터는 명확하고 재사용 가능하게 구성
+
 ## Git 워크플로우
 
 ### 커밋 메시지 규칙
