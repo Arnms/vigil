@@ -1,12 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import redisConfig from './config/redis.config';
 import notificationConfig from './config/notification.config';
+import { getBullRootConfig } from './config/bull.config';
+import { EndpointModule } from './modules/endpoint/endpoint.module';
+import { HealthCheckModule } from './modules/health-check/health-check.module';
 
 @Module({
   imports: [
@@ -26,6 +30,14 @@ import notificationConfig from './config/notification.config';
       },
       inject: [ConfigService],
     }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => getBullRootConfig(configService),
+      inject: [ConfigService],
+    }),
+    // Feature modules
+    EndpointModule,
+    HealthCheckModule,
   ],
   controllers: [AppController],
   providers: [AppService],

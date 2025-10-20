@@ -31,14 +31,14 @@ export class Incident {
 
   @Column({ type: 'timestamp', nullable: true })
   @Index()
-  resolvedAt: Date;
+  resolvedAt: Date | null;
 
   @Column({ type: 'int', nullable: true })
-  duration: number;
+  duration: number | null;
 
   @Column({ default: 0 })
   failureCount: number;
 
   @Column({ type: 'text', nullable: true })
-  errorMessage: string;
+  errorMessage: string | null;
 }

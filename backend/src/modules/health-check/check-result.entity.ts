@@ -37,13 +37,13 @@ export class CheckResult {
   status: CheckStatus;
 
   @Column({ type: 'float', nullable: true })
-  responseTime: number;
+  responseTime: number | null;
 
   @Column({ type: 'int', nullable: true })
-  statusCode: number;
+  statusCode: number | null;
 
   @Column({ type: 'text', nullable: true })
-  errorMessage: string;
+  errorMessage: string | null;
 
   @CreateDateColumn()
   @Index()

@@ -70,10 +70,10 @@ export class Endpoint {
   currentStatus: EndpointStatus;
 
   @Column({ type: 'float', nullable: true })
-  lastResponseTime: number;
+  lastResponseTime: number | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  lastCheckedAt: Date;
+  lastCheckedAt: Date | null;
 
   @Column({ default: 0 })
   consecutiveFailures: number;
