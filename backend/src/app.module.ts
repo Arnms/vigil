@@ -11,6 +11,7 @@ import notificationConfig from './config/notification.config';
 import { getBullRootConfig } from './config/bull.config';
 import { EndpointModule } from './modules/endpoint/endpoint.module';
 import { HealthCheckModule } from './modules/health-check/health-check.module';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { HealthCheckModule } from './modules/health-check/health-check.module';
     // Feature modules
     EndpointModule,
     HealthCheckModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
