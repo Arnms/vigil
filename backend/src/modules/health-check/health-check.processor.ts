@@ -8,6 +8,7 @@ import { HttpService } from '@nestjs/axios';
 import { Endpoint, EndpointStatus } from '../endpoint/endpoint.entity';
 import { CheckResult, CheckStatus } from './check-result.entity';
 import { Incident } from '../incident/incident.entity';
+import { NotificationService } from '../notification/services/notification.service';
 
 interface HealthCheckJobData {
   endpointId: string;
@@ -28,6 +29,7 @@ export class HealthCheckProcessor {
     @InjectRepository(Incident)
     private incidentRepository: Repository<Incident>,
     private httpService: HttpService,
+    private notificationService: NotificationService,
   ) {}
 
   @Process('check')
@@ -55,11 +57,24 @@ export class HealthCheckProcessor {
       // 3️⃣ CheckResult 저장
       const savedResult = await this.checkResultRepository.save(checkResult);
 
+      // 📝 상태 변경 전 이전 상태 저장
+      const previousStatus = endpoint.currentStatus;
+
       // 4️⃣ Endpoint 상태 업데이트
       await this.updateEndpointStatus(endpoint, checkResult);
 
       // 5️⃣ Incident 처리
       await this.handleIncidents(endpoint, checkResult);
+
+      // 💬 상태 변경 시 알림 발송 (NEW)
+      if (previousStatus !== endpoint.currentStatus) {
+        await this.notificationService.sendAlertOnStatusChange(
+          endpoint,
+          previousStatus,
+          endpoint.currentStatus,
+          checkResult,
+        );
+      }
 
       this.logger.log(
         `Health check completed for ${endpoint.name}: ${checkResult.status}`,

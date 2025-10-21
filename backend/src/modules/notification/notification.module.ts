@@ -7,6 +7,7 @@ import { DuplicatePreventionService } from './services/duplicate-prevention.serv
 import { NotificationChannel, NotificationType } from './notification-channel.entity';
 import { NotificationChannelController } from './notification.controller';
 import { EmailStrategy } from './strategies/email.strategy';
+import { SlackStrategy } from './strategies/slack.strategy';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { EmailStrategy } from './strategies/email.strategy';
     NotificationService,
     DuplicatePreventionService,
     EmailStrategy,
+    SlackStrategy,
   ],
   controllers: [NotificationChannelController],
   exports: [NotificationService, DuplicatePreventionService], // 다른 모듈에서 사용
@@ -25,8 +27,10 @@ export class NotificationModule {
   constructor(
     private notificationService: NotificationService,
     private emailStrategy: EmailStrategy,
+    private slackStrategy: SlackStrategy,
   ) {
-    // EmailStrategy 등록
+    // Strategy 등록
     this.notificationService.registerStrategy(NotificationType.EMAIL, emailStrategy);
+    this.notificationService.registerStrategy(NotificationType.SLACK, slackStrategy);
   }
 }
