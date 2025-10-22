@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  Index,
 } from 'typeorm';
 import { CheckResult } from '../health-check/check-result.entity';
 import { Incident } from '../incident/incident.entity';
@@ -27,6 +28,12 @@ export enum EndpointStatus {
 }
 
 @Entity('endpoints')
+@Index(['isActive', 'currentStatus'])
+@Index(['currentStatus'])
+@Index(['isActive'])
+@Index(['createdAt'])
+@Index(['updatedAt'])
+@Index(['lastCheckedAt'])
 export class Endpoint {
   @PrimaryGeneratedColumn('uuid')
   id: string;
