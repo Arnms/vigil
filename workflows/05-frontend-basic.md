@@ -2,7 +2,7 @@
 
 **목표**: 프론트엔드 기본 구조 및 엔드포인트 관리 UI
 **기간**: Day 8-9
-**상태**: ⏳ 대기
+**상태**: 🔄 진행중 (Phase 1-2 완료, Phase 3 진행 중)
 
 ---
 
@@ -11,19 +11,20 @@
 ### 1. Vite + React + TypeScript 프로젝트 셋업
 
 **목표**: 프론트엔드 개발 환경 구성
+**상태**: ✅ 완료
 
-- [ ] Vite 프로젝트 생성
+- [x] Vite 프로젝트 생성
   ```bash
   npm create vite@latest frontend -- --template react-ts
   ```
 
-- [ ] 필수 의존성 설치
-  - React Router (라우팅)
-  - Zustand (상태 관리)
-  - axios (HTTP 클라이언트)
-  - TailwindCSS (스타일링)
+- [x] 필수 의존성 설치
+  - React Router (라우팅) ✅
+  - Zustand (상태 관리) ✅
+  - axios (HTTP 클라이언트) ✅
+  - TailwindCSS v3 (스타일링) ✅
 
-- [ ] 디렉토리 구조 생성
+- [x] 디렉토리 구조 생성
   ```
   frontend/src/
   ├── components/
@@ -36,47 +37,66 @@
   └── main.tsx
   ```
 
-- [ ] TailwindCSS 설정
+- [x] TailwindCSS 설정 (v3)
   ```bash
-  npm install -D tailwindcss postcss autoprefixer
-  npx tailwindcss init -p
+  npm install -D tailwindcss@3 postcss@8 autoprefixer@10
   ```
 
-- [ ] TypeScript 설정 검증
-  - tsconfig.json 확인
-  - 적절한 엄격성 설정
+- [x] TypeScript 설정 검증
+  - tsconfig.json 확인 ✅
+  - 적절한 엄격성 설정 ✅
+
+- [x] 빌드 오류 해결
+  - @rollup/rollup-win32-x64-msvc 누락 해결 ✅
+  - Tailwind CSS v3 호환성 확보 ✅
 
 ---
 
 ### 2. 레이아웃 및 라우팅 구현
 
 **목표**: 애플리케이션의 기본 레이아웃 및 페이지 네비게이션
+**상태**: ✅ 완료
 
-- [ ] React Router 설정
-  - `src/App.tsx` 라우터 설정
-  - 주요 경로 정의:
-    - `/` - 대시보드
-    - `/endpoints` - 엔드포인트 목록
-    - `/endpoints/new` - 엔드포인트 생성
-    - `/endpoints/:id` - 엔드포인트 상세
-    - `/incidents` - 인시던트 목록
-    - `/statistics` - 통계
+- [x] React Router 설정
+  - `src/App.tsx` 라우터 설정 ✅
+  - 주요 경로 정의: ✅
+    - `/` - 대시보드 ✅
+    - `/endpoints` - 엔드포인트 목록 ✅
+    - `/endpoints/new` - 엔드포인트 생성 ✅
+    - `/endpoints/:id` - 엔드포인트 상세 ✅
+    - `/incidents` - 인시던트 목록 ✅
+    - `/statistics` - 통계 ✅
 
-- [ ] 기본 레이아웃 컴포넌트
-  - `src/components/Layout/Header.tsx` - 헤더 (로고, 타이틀)
-  - `src/components/Layout/Sidebar.tsx` - 사이드바 (네비게이션)
-  - `src/components/Layout/MainLayout.tsx` - 메인 레이아웃
+- [x] 기본 레이아웃 컴포넌트
+  - `src/components/Layout/Header.tsx` - 헤더 (로고, 타이틀) ✅
+  - `src/components/Layout/Sidebar.tsx` - 사이드바 (네비게이션) ✅
+  - `src/components/Layout/MainLayout.tsx` - 메인 레이아웃 ✅
 
-- [ ] 네비게이션
-  - 메뉴 항목들
-  - 활성 메뉴 표시
-  - 반응형 네비게이션
+- [x] 네비게이션
+  - 메뉴 항목들 ✅
+  - 활성 메뉴 표시 ✅
+  - Tailwind CSS로 반응형 네비게이션 ✅
+
+- [x] 페이지 컴포넌트 생성
+  - Dashboard.tsx ✅
+  - EndpointList.tsx ✅
+  - EndpointForm.tsx (폼 검증 포함) ✅
+  - EndpointDetail.tsx ✅
+  - Incidents.tsx ✅
+  - Statistics.tsx ✅
+  - NotFound.tsx ✅
+
+- [x] 타입 정의
+  - types/endpoint.ts ✅
+  - types/incident.ts ✅
+  - types/statistics.ts ✅
 
 ---
 
 ### 3. API 서비스 레이어 구현
 
 **목표**: 백엔드 API와의 통신을 관리
+**상태**: 🔄 진행 중
 
 - [ ] axios 설정
   - `src/services/api.ts` - 기본 설정
@@ -100,10 +120,10 @@
     - getIncidents()
     - getIncident(id)
 
-- [ ] 타입 정의
-  - `src/types/endpoint.ts`
-  - `src/types/incident.ts`
-  - `src/types/statistics.ts`
+- [x] 타입 정의
+  - `src/types/endpoint.ts` ✅
+  - `src/types/incident.ts` ✅
+  - `src/types/statistics.ts` ✅
 
 ---
 
@@ -209,14 +229,14 @@
 
 작업이 완료되었는지 확인합니다:
 
-- [ ] 프론트엔드 프로젝트가 정상적으로 실행되는가?
+- [x] 프론트엔드 프로젝트가 정상적으로 실행되는가? ✅
   ```bash
   npm run dev
-  # http://localhost:5173에서 접근 확인
+  # http://localhost:5173에서 접근 확인 ✅
   ```
 
-- [ ] 라우팅이 정상 작동하는가?
-  - 모든 경로에 접근 가능
+- [x] 라우팅이 정상 작동하는가? ✅
+  - 모든 경로에 접근 가능 ✅
 
 - [ ] API 서비스가 백엔드와 통신하는가?
   - 네트워크 탭에서 요청 확인
