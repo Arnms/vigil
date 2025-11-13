@@ -2,7 +2,7 @@
 
 **목표**: 프론트엔드 기본 구조 및 엔드포인트 관리 UI
 **기간**: Day 8-9
-**상태**: 🔄 진행중 (Phase 1-3 완료, Phase 4 진행 중)
+**상태**: 🔄 진행중 (Phase 1-4 완료, Phase 5 진행 중)
 
 ---
 
@@ -146,30 +146,32 @@
 ### 4. 상태 관리 (Zustand)
 
 **목표**: 전역 상태 관리 설정
-**상태**: 🔄 진행 중
+**상태**: ✅ 완료
 
-- [ ] Zustand Store 생성
-  - `src/stores/endpoint.store.ts` - 엔드포인트 상태
-  - `src/stores/ui.store.ts` - UI 상태 (로딩, 에러, 알림)
+- [x] Zustand Store 생성 ✅
+  - `src/stores/endpoint.store.ts` - 엔드포인트 상태 ✅
+  - `src/stores/ui.store.ts` - UI 상태 (로딩, 에러, 알림) ✅
+  - `src/stores/incident.store.ts` - 인시던트 상태 ✅
+  - `src/stores/statistics.store.ts` - 통계 상태 ✅
 
-- [ ] 상태 정의
-  - endpoints: Endpoint[]
-  - selectedEndpoint: Endpoint | null
-  - isLoading: boolean
-  - error: string | null
+- [x] 상태 정의 ✅
+  - endpoints, selectedEndpoint ✅
+  - isLoading, error, alerts ✅
+  - incidents, activeIncidents, recentIncidents ✅
+  - overview, uptimeStats, responseTimeStats ✅
 
-- [ ] 액션 정의
-  - fetchEndpoints()
-  - createEndpoint()
-  - updateEndpoint()
-  - deleteEndpoint()
-  - setSelectedEndpoint()
+- [x] 액션 정의 ✅
+  - fetchEndpoints(), createEndpoint(), updateEndpoint(), deleteEndpoint() ✅
+  - setSelectedEndpoint(), addAlert(), removeAlert() ✅
+  - fetchIncidents(), resolveIncident() ✅
+  - fetchUptime(), fetchResponseTime(), fetchStatusDistribution() ✅
 
 ---
 
 ### 5. 엔드포인트 목록 페이지
 
 **목표**: 등록된 엔드포인트 목록 표시
+**상태**: 🔄 진행 중
 
 - [ ] EndpointList 컴포넌트
   - `src/pages/Endpoints/EndpointList.tsx`
