@@ -18,7 +18,8 @@ export const useSubscriptionStore = create<SubscriptionStore>((set, get) => ({
     if (!current.has(endpointId)) {
       const newSubs = new Set(current)
       newSubs.add(endpointId)
-      socketService.emit('subscribe:endpoint', { endpointId })
+      // 서버에 구독 요청
+      socketService.subscribeToEndpoint(endpointId)
       set({ subscriptions: newSubs })
     }
   },
@@ -28,13 +29,15 @@ export const useSubscriptionStore = create<SubscriptionStore>((set, get) => ({
     if (current.has(endpointId)) {
       const newSubs = new Set(current)
       newSubs.delete(endpointId)
-      socketService.emit('unsubscribe:endpoint', { endpointId })
+      // 서버에 구독 해제 요청
+      socketService.unsubscribeFromEndpoint(endpointId)
       set({ subscriptions: newSubs })
     }
   },
 
   subscribeAll: () => {
-    socketService.emit('subscribe:all', {})
+    // 서버에 전체 구독 요청
+    socketService.subscribeToAllEndpoints()
     // 모든 엔드포인트 구독 표시
     set({ subscriptions: new Set() })
   },
@@ -42,7 +45,8 @@ export const useSubscriptionStore = create<SubscriptionStore>((set, get) => ({
   unsubscribeAll: () => {
     const current = get().subscriptions
     current.forEach((endpointId) => {
-      socketService.emit('unsubscribe:endpoint', { endpointId })
+      // 서버에 구독 해제 요청
+      socketService.unsubscribeFromEndpoint(endpointId)
     })
     set({ subscriptions: new Set() })
   },

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { useEndpointStore } from '../../stores/endpoint.store'
+import { useSubscriptionStore } from '../../stores/subscription.store'
 import { useUIStore } from '../../stores/ui.store'
 import EndpointTable from '../../components/EndpointTable'
 import type { Endpoint } from '../../types/endpoint'
@@ -23,12 +24,20 @@ export default function EndpointList() {
     checkEndpoint,
   } = useEndpointStore()
 
+  const { subscribeAll, unsubscribeAll } = useSubscriptionStore()
   const { addAlert } = useUIStore()
 
-  // 컴포넌트 마운트 시 엔드포인트 목록 조회
+  // 컴포넌트 마운트 시 엔드포인트 목록 조회 및 전체 구독
   useEffect(() => {
     fetchEndpoints(currentPage, pageSize, selectedStatus || undefined)
-  }, [currentPage, pageSize, selectedStatus, fetchEndpoints])
+    // 모든 엔드포인트에 대해 구독 (실시간 업데이트 수신)
+    subscribeAll()
+
+    // 언마운트 시 구독 해제
+    return () => {
+      unsubscribeAll()
+    }
+  }, [currentPage, pageSize, selectedStatus, fetchEndpoints, subscribeAll, unsubscribeAll])
 
   // 에러 처리
   useEffect(() => {

@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useEndpointStore } from '../../stores/endpoint.store'
 import { useIncidentStore } from '../../stores/incident.store'
+import { useSubscriptionStore } from '../../stores/subscription.store'
 import { useStatisticsStore } from '../../stores/statistics.store'
 import { useUIStore } from '../../stores/ui.store'
 import StatusBadge from '../../components/StatusBadge'
@@ -24,11 +25,12 @@ export default function EndpointDetail() {
     fetchEndpointCheckResults,
     checkResults,
   } = useIncidentStore()
+  const { subscribe, unsubscribe } = useSubscriptionStore()
   const { fetchUptime, fetchResponseTime, uptimeStats, responseTimeStats } =
     useStatisticsStore()
   const { addAlert } = useUIStore()
 
-  // 데이터 로드
+  // 데이터 로드 및 구독 설정
   useEffect(() => {
     if (id) {
       fetchEndpoint(id)
@@ -36,8 +38,15 @@ export default function EndpointDetail() {
       fetchEndpointCheckResults(id)
       fetchUptime(id, 'day')
       fetchResponseTime(id, 'day')
+      // 특정 엔드포인트에 대해 구독 (실시간 업데이트 수신)
+      subscribe(id)
+
+      // 언마운트 또는 id 변경 시 구독 해제
+      return () => {
+        unsubscribe(id)
+      }
     }
-  }, [id, fetchEndpoint, fetchIncidentsByEndpoint, fetchEndpointCheckResults, fetchUptime, fetchResponseTime])
+  }, [id, fetchEndpoint, fetchIncidentsByEndpoint, fetchEndpointCheckResults, fetchUptime, fetchResponseTime, subscribe, unsubscribe])
 
   const handleCheck = async () => {
     if (!id) return
