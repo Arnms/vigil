@@ -9,6 +9,7 @@ import { Endpoint, EndpointStatus } from '../endpoint/endpoint.entity';
 import { CheckResult, CheckStatus } from './check-result.entity';
 import { Incident } from '../incident/incident.entity';
 import { NotificationService } from '../notification/services/notification.service';
+import { WebsocketGateway } from '../websocket/websocket.gateway';
 
 interface HealthCheckJobData {
   endpointId: string;
@@ -30,6 +31,7 @@ export class HealthCheckProcessor {
     private incidentRepository: Repository<Incident>,
     private httpService: HttpService,
     private notificationService: NotificationService,
+    private websocketGateway: WebsocketGateway,
   ) {}
 
   @Process('check')
@@ -57,14 +59,37 @@ export class HealthCheckProcessor {
       // 3️⃣ CheckResult 저장
       const savedResult = await this.checkResultRepository.save(checkResult);
 
+      // 📡 WebSocket: 체크 완료 이벤트 브로드캐스트
+      this.websocketGateway.broadcastCheckCompleted(endpoint.id, {
+        endpointId: endpoint.id,
+        status: checkResult.status,
+        responseTime: checkResult.responseTime || 0,
+        statusCode: checkResult.statusCode || undefined,
+        errorMessage: checkResult.errorMessage || undefined,
+        endpointName: endpoint.name,
+      });
+
       // 📝 상태 변경 전 이전 상태 저장
       const previousStatus = endpoint.currentStatus;
 
       // 4️⃣ Endpoint 상태 업데이트
       await this.updateEndpointStatus(endpoint, checkResult);
 
-      // 5️⃣ Incident 처리
-      await this.handleIncidents(endpoint, checkResult);
+      // 📡 WebSocket: 상태 변경 이벤트 브로드캐스트 (상태가 변경된 경우만)
+      if (previousStatus !== endpoint.currentStatus) {
+        this.websocketGateway.broadcastStatusChange(endpoint.id, {
+          endpointId: endpoint.id,
+          currentStatus: endpoint.currentStatus,
+          previousStatus: previousStatus,
+          timestamp: new Date(),
+          responseTime: checkResult.responseTime || 0,
+          errorMessage: checkResult.errorMessage || undefined,
+          endpointName: endpoint.name,
+        });
+      }
+
+      // 5️⃣ Incident 처리 및 WebSocket 브로드캐스트
+      await this.handleIncidentsWithWebSocket(endpoint, checkResult);
 
       // 💬 상태 변경 시 알림 발송 (NEW)
       if (previousStatus !== endpoint.currentStatus) {
@@ -223,12 +248,12 @@ export class HealthCheckProcessor {
   }
 
   /**
-   * Incident 처리
+   * Incident 처리 (WebSocket 이벤트 포함)
    *
-   * DOWN 상태 진입 시: 새 Incident 생성
-   * UP/DEGRADED 상태 회복 시: Incident 종료
+   * DOWN 상태 진입 시: 새 Incident 생성 → incident:started 이벤트
+   * UP/DEGRADED 상태 회복 시: Incident 종료 → incident:resolved 이벤트
    */
-  private async handleIncidents(
+  private async handleIncidentsWithWebSocket(
     endpoint: Endpoint,
     checkResult: CheckResult,
   ): Promise<void> {
@@ -251,7 +276,17 @@ export class HealthCheckProcessor {
       incident.failureCount = endpoint.consecutiveFailures;
       incident.errorMessage = checkResult.errorMessage;
 
-      await this.incidentRepository.save(incident);
+      const savedIncident = await this.incidentRepository.save(incident);
+
+      // 📡 WebSocket: 인시던트 시작 이벤트 브로드캐스트
+      this.websocketGateway.broadcastIncidentStarted(endpoint.id, {
+        incidentId: savedIncident.id,
+        endpointId: endpoint.id,
+        startedAt: savedIncident.startedAt,
+        failureCount: savedIncident.failureCount,
+        endpointName: endpoint.name,
+      });
+
       this.logger.warn(
         `Incident created for endpoint ${endpoint.name}: ${incident.errorMessage}`,
       );
@@ -262,11 +297,31 @@ export class HealthCheckProcessor {
         activeIncident.resolvedAt.getTime() -
         activeIncident.startedAt.getTime();
 
-      await this.incidentRepository.save(activeIncident);
+      const savedIncident = await this.incidentRepository.save(activeIncident);
+
+      // 📡 WebSocket: 인시던트 해결 이벤트 브로드캐스트
+      this.websocketGateway.broadcastIncidentResolved(endpoint.id, {
+        incidentId: savedIncident.id,
+        endpointId: endpoint.id,
+        resolvedAt: savedIncident.resolvedAt || new Date(),
+        duration: savedIncident.duration || 0,
+        endpointName: endpoint.name,
+      });
+
       this.logger.log(
         `Incident resolved for endpoint ${endpoint.name}, duration: ${activeIncident.duration}ms`,
       );
     }
+  }
+
+  /**
+   * Incident 처리 (기존 메서드 - 호환성 유지)
+   */
+  private async handleIncidents(
+    endpoint: Endpoint,
+    checkResult: CheckResult,
+  ): Promise<void> {
+    // 이 메서드는 더 이상 사용되지 않음 (handleIncidentsWithWebSocket 사용)
   }
 
   @OnGlobalQueueError()

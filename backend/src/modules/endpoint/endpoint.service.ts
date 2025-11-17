@@ -17,6 +17,7 @@ import {
 import { CheckResult } from '../health-check/check-result.entity';
 import { Incident } from '../incident/incident.entity';
 import { HealthCheckService } from '../health-check/health-check.service';
+import { WebsocketGateway } from '../websocket/websocket.gateway';
 
 @Injectable()
 export class EndpointService {
@@ -30,6 +31,7 @@ export class EndpointService {
     @InjectRepository(Incident)
     private incidentRepository: Repository<Incident>,
     private healthCheckService: HealthCheckService,
+    private websocketGateway: WebsocketGateway,
   ) {}
 
   /**
@@ -48,6 +50,14 @@ export class EndpointService {
 
       // 헬스 체크 스케줄 추가
       await this.healthCheckService.scheduleHealthCheck(savedEndpoint);
+
+      // 📡 WebSocket: 엔드포인트 생성 이벤트 브로드캐스트
+      this.websocketGateway.broadcastEndpointCreated({
+        endpointId: savedEndpoint.id,
+        name: savedEndpoint.name,
+        url: savedEndpoint.url,
+        method: savedEndpoint.method,
+      });
 
       return savedEndpoint;
     } catch (error) {
@@ -151,6 +161,18 @@ export class EndpointService {
 
     this.logger.log(`Endpoint updated: ${id}`);
 
+    // 📡 WebSocket: 엔드포인트 수정 이벤트 브로드캐스트
+    this.websocketGateway.broadcastEndpointUpdated({
+      endpointId: updatedEndpoint.id,
+      changes: {
+        name: updatedEndpoint.name,
+        url: updatedEndpoint.url,
+        method: updatedEndpoint.method,
+        currentStatus: updatedEndpoint.currentStatus,
+        isActive: updatedEndpoint.isActive,
+      },
+    });
+
     return updatedEndpoint;
   }
 
@@ -168,6 +190,12 @@ export class EndpointService {
     await this.endpointRepository.save(endpoint);
 
     this.logger.log(`Endpoint deleted: ${id}`);
+
+    // 📡 WebSocket: 엔드포인트 삭제 이벤트 브로드캐스트
+    this.websocketGateway.broadcastEndpointDeleted({
+      endpointId: endpoint.id,
+      name: endpoint.name,
+    });
   }
 
   /**
