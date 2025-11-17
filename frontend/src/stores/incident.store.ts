@@ -32,6 +32,11 @@ interface IncidentState {
   setSelectedIncident: (incident: Incident | null) => void
   clearError: () => void
   reset: () => void
+
+  // 액션 - 실시간 업데이트 (WebSocket)
+  handleIncidentStarted: (incidentData: Incident) => void
+  handleIncidentResolved: (incidentData: Incident) => void
+  handleCheckCompleted: (checkData: CheckResult) => void
 }
 
 const initialState = {
@@ -228,5 +233,42 @@ export const useIncidentStore = create<IncidentState>((set, get) => ({
   // 전체 상태 초기화
   reset: () => {
     set(initialState)
+  },
+
+  // WebSocket 실시간 업데이트 - 인시던트 시작
+  handleIncidentStarted: (incidentData: Incident) => {
+    const state = get()
+    set({
+      incidents: [incidentData, ...state.incidents],
+      activeIncidents: [incidentData, ...state.activeIncidents],
+      recentIncidents: [incidentData, ...state.recentIncidents.slice(0, 9)],
+      totalCount: state.totalCount + 1,
+    })
+  },
+
+  // WebSocket 실시간 업데이트 - 인시던트 해결
+  handleIncidentResolved: (incidentData: Incident) => {
+    const state = get()
+    set({
+      incidents: state.incidents.map((i) =>
+        i.id === incidentData.id ? incidentData : i
+      ),
+      activeIncidents: state.activeIncidents.filter((i) => i.id !== incidentData.id),
+      recentIncidents: state.recentIncidents.map((i) =>
+        i.id === incidentData.id ? incidentData : i
+      ),
+      selectedIncident:
+        state.selectedIncident?.id === incidentData.id
+          ? incidentData
+          : state.selectedIncident,
+    })
+  },
+
+  // WebSocket 실시간 업데이트 - 체크 완료
+  handleCheckCompleted: (checkData: CheckResult) => {
+    const state = get()
+    set({
+      checkResults: [checkData, ...state.checkResults.slice(0, 49)],
+    })
   },
 }))

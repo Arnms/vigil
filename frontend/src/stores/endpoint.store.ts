@@ -29,6 +29,12 @@ interface EndpointState {
 
   // 액션 - 추가 작업
   checkEndpoint: (id: string) => Promise<any>
+
+  // 액션 - 실시간 업데이트 (WebSocket)
+  updateEndpointStatus: (endpointId: string, statusData: any) => void
+  handleEndpointCreated: (endpointData: Endpoint) => void
+  handleEndpointUpdated: (endpointData: Endpoint) => void
+  handleEndpointDeleted: (endpointId: string) => void
 }
 
 const initialState = {
@@ -183,5 +189,63 @@ export const useEndpointStore = create<EndpointState>((set, get) => ({
       set({ error: message, isLoading: false })
       throw error
     }
+  },
+
+  // WebSocket 실시간 업데이트 - 엔드포인트 상태 변경
+  updateEndpointStatus: (endpointId: string, statusData: any) => {
+    const state = get()
+    const baseEndpoint = state.endpoints.find((e) => e.id === endpointId)
+    if (!baseEndpoint) return
+
+    const updatedEndpoint = {
+      ...baseEndpoint,
+      currentStatus: statusData.status,
+      lastCheckedAt: statusData.lastCheckedAt || new Date().toISOString(),
+      lastResponseTime: statusData.responseTime || null,
+    }
+
+    set({
+      endpoints: state.endpoints.map((e) =>
+        e.id === endpointId ? updatedEndpoint : e
+      ),
+      selectedEndpoint:
+        state.selectedEndpoint?.id === endpointId
+          ? updatedEndpoint
+          : state.selectedEndpoint,
+    })
+  },
+
+  // WebSocket 실시간 업데이트 - 엔드포인트 생성
+  handleEndpointCreated: (endpointData: Endpoint) => {
+    const state = get()
+    set({
+      endpoints: [...state.endpoints, endpointData],
+      totalCount: state.totalCount + 1,
+    })
+  },
+
+  // WebSocket 실시간 업데이트 - 엔드포인트 수정
+  handleEndpointUpdated: (endpointData: Endpoint) => {
+    const state = get()
+    set({
+      endpoints: state.endpoints.map((e) =>
+        e.id === endpointData.id ? endpointData : e
+      ),
+      selectedEndpoint:
+        state.selectedEndpoint?.id === endpointData.id
+          ? endpointData
+          : state.selectedEndpoint,
+    })
+  },
+
+  // WebSocket 실시간 업데이트 - 엔드포인트 삭제
+  handleEndpointDeleted: (endpointId: string) => {
+    const state = get()
+    set({
+      endpoints: state.endpoints.filter((e) => e.id !== endpointId),
+      selectedEndpoint:
+        state.selectedEndpoint?.id === endpointId ? null : state.selectedEndpoint,
+      totalCount: state.totalCount - 1,
+    })
   },
 }))
