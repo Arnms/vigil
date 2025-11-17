@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import ConnectionStatus from '../Common/ConnectionStatus'
 
 export default function Header() {
   return (
@@ -20,6 +21,9 @@ export default function Header() {
               설정
             </a>
           </nav>
+          <div className="ml-4">
+            <ConnectionStatus />
+          </div>
         </div>
       </div>
     </header>

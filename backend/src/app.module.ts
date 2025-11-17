@@ -13,6 +13,7 @@ import { EndpointModule } from './modules/endpoint/endpoint.module';
 import { HealthCheckModule } from './modules/health-check/health-check.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { StatisticsModule } from './modules/statistics/statistics.module';
+import { WebsocketModule } from './modules/websocket/websocket.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { StatisticsModule } from './modules/statistics/statistics.module';
     HealthCheckModule,
     NotificationModule,
     StatisticsModule,
+    WebsocketModule,
   ],
   controllers: [AppController],
   providers: [AppService],

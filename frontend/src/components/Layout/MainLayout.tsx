@@ -1,8 +1,12 @@
 import { Outlet } from 'react-router-dom'
 import Header from './Header'
 import Sidebar from './Sidebar'
+import { useWebSocketToasts } from '../../hooks/useWebSocketToasts'
 
 export default function MainLayout() {
+  // WebSocket 토스트 알림 설정
+  useWebSocketToasts()
+
   return (
     <div className="flex flex-col h-screen">
       {/* Header */}
