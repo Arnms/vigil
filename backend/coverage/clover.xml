@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1763451252174" clover="3.2.0">
-  <project timestamp="1763451252174" name="All files">
-    <metrics statements="1085" coveredstatements="819" conditionals="684" coveredconditionals="437" methods="191" coveredmethods="137" elements="1960" coveredelements="1393" complexity="0" loc="1085" ncloc="1085" packages="15" files="50" classes="50"/>
+<coverage generated="1763452123699" clover="3.2.0">
+  <project timestamp="1763452123699" name="All files">
+    <metrics statements="1085" coveredstatements="847" conditionals="684" coveredconditionals="445" methods="191" coveredmethods="144" elements="1960" coveredelements="1436" complexity="0" loc="1085" ncloc="1085" packages="15" files="50" classes="50"/>
     <package name="src">
       <metrics statements="43" coveredstatements="9" conditionals="8" coveredconditionals="3" methods="6" coveredmethods="3"/>
       <file name="app.controller.ts" path="D:\Workspace\vigil\backend\src\app.controller.ts">
@@ -323,7 +323,7 @@
       </file>
     </package>
     <package name="src.modules.health-check">
-      <metrics statements="181" coveredstatements="142" conditionals="112" coveredconditionals="80" methods="20" coveredmethods="15"/>
+      <metrics statements="181" coveredstatements="142" conditionals="112" coveredconditionals="79" methods="20" coveredmethods="15"/>
       <file name="check-result.entity.ts" path="D:\Workspace\vigil\backend\src\modules\health-check\check-result.entity.ts">
         <metrics statements="15" coveredstatements="14" conditionals="10" coveredconditionals="9" methods="3" coveredmethods="1"/>
         <line num="1" count="10" type="stmt"/>
@@ -357,7 +357,7 @@
         <line num="25" count="0" type="stmt"/>
       </file>
       <file name="health-check.processor.ts" path="D:\Workspace\vigil\backend\src\modules\health-check\health-check.processor.ts">
-        <metrics statements="115" coveredstatements="88" conditionals="94" coveredconditionals="64" methods="10" coveredmethods="7"/>
+        <metrics statements="115" coveredstatements="88" conditionals="94" coveredconditionals="63" methods="10" coveredmethods="7"/>
         <line num="1" count="1" type="stmt"/>
         <line num="2" count="1" type="stmt"/>
         <line num="4" count="1" type="stmt"/>
@@ -646,37 +646,37 @@
       </file>
     </package>
     <package name="src.modules.notification.services">
-      <metrics statements="100" coveredstatements="71" conditionals="46" coveredconditionals="33" methods="17" coveredmethods="10"/>
+      <metrics statements="100" coveredstatements="97" conditionals="46" coveredconditionals="41" methods="17" coveredmethods="17"/>
       <file name="duplicate-prevention.service.ts" path="D:\Workspace\vigil\backend\src\modules\notification\services\duplicate-prevention.service.ts">
-        <metrics statements="28" coveredstatements="2" conditionals="8" coveredconditionals="0" methods="7" coveredmethods="0"/>
-        <line num="1" count="3" type="stmt"/>
-        <line num="10" count="3" type="stmt"/>
-        <line num="11" count="0" type="stmt"/>
-        <line num="12" count="0" type="stmt"/>
-        <line num="13" count="0" type="stmt"/>
-        <line num="17" count="0" type="stmt"/>
-        <line num="24" count="0" type="stmt"/>
-        <line num="25" count="0" type="stmt"/>
-        <line num="27" count="0" type="stmt"/>
-        <line num="28" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="29" count="0" type="stmt"/>
-        <line num="30" count="0" type="stmt"/>
-        <line num="34" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="35" count="0" type="stmt"/>
-        <line num="43" count="0" type="stmt"/>
-        <line num="44" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="46" count="0" type="stmt"/>
-        <line num="47" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="48" count="0" type="stmt"/>
-        <line num="49" count="0" type="stmt"/>
-        <line num="52" count="0" type="stmt"/>
-        <line num="59" count="0" type="stmt"/>
-        <line num="60" count="0" type="stmt"/>
-        <line num="67" count="0" type="stmt"/>
-        <line num="68" count="0" type="stmt"/>
-        <line num="75" count="0" type="stmt"/>
-        <line num="76" count="0" type="stmt"/>
-        <line num="77" count="0" type="stmt"/>
+        <metrics statements="28" coveredstatements="28" conditionals="8" coveredconditionals="8" methods="7" coveredmethods="7"/>
+        <line num="1" count="4" type="stmt"/>
+        <line num="10" count="4" type="stmt"/>
+        <line num="11" count="43" type="stmt"/>
+        <line num="12" count="43" type="stmt"/>
+        <line num="13" count="43" type="stmt"/>
+        <line num="17" count="59" type="stmt"/>
+        <line num="24" count="59" type="stmt"/>
+        <line num="25" count="59" type="stmt"/>
+        <line num="27" count="59" type="stmt"/>
+        <line num="28" count="91" type="cond" truecount="2" falsecount="0"/>
+        <line num="29" count="8" type="stmt"/>
+        <line num="30" count="8" type="stmt"/>
+        <line num="34" count="59" type="cond" truecount="2" falsecount="0"/>
+        <line num="35" count="3" type="stmt"/>
+        <line num="43" count="1186" type="stmt"/>
+        <line num="44" count="1186" type="cond" truecount="2" falsecount="0"/>
+        <line num="46" count="1161" type="stmt"/>
+        <line num="47" count="1161" type="cond" truecount="2" falsecount="0"/>
+        <line num="48" count="7" type="stmt"/>
+        <line num="49" count="7" type="stmt"/>
+        <line num="52" count="1154" type="stmt"/>
+        <line num="59" count="1157" type="stmt"/>
+        <line num="60" count="1157" type="stmt"/>
+        <line num="67" count="7" type="stmt"/>
+        <line num="68" count="7" type="stmt"/>
+        <line num="75" count="6" type="stmt"/>
+        <line num="76" count="6" type="stmt"/>
+        <line num="77" count="6" type="stmt"/>
       </file>
       <file name="notification.service.ts" path="D:\Workspace\vigil\backend\src\modules\notification\services\notification.service.ts">
         <metrics statements="72" coveredstatements="69" conditionals="38" coveredconditionals="33" methods="10" coveredmethods="10"/>
@@ -932,19 +932,19 @@
       </file>
     </package>
     <package name="src.modules.statistics.services">
-      <metrics statements="261" coveredstatements="198" conditionals="180" coveredconditionals="116" methods="49" coveredmethods="45"/>
+      <metrics statements="261" coveredstatements="200" conditionals="180" coveredconditionals="117" methods="49" coveredmethods="45"/>
       <file name="cache-manager.service.ts" path="D:\Workspace\vigil\backend\src\modules\statistics\services\cache-manager.service.ts">
-        <metrics statements="95" coveredstatements="43" conditionals="57" coveredconditionals="25" methods="13" coveredmethods="9"/>
+        <metrics statements="95" coveredstatements="45" conditionals="57" coveredconditionals="26" methods="13" coveredmethods="9"/>
         <line num="1" count="4" type="stmt"/>
         <line num="2" count="4" type="stmt"/>
         <line num="3" count="4" type="stmt"/>
         <line num="17" count="4" type="stmt"/>
-        <line num="18" count="49" type="stmt"/>
-        <line num="19" count="49" type="stmt"/>
-        <line num="21" count="49" type="stmt"/>
-        <line num="22" count="49" type="stmt"/>
-        <line num="25" count="49" type="stmt"/>
-        <line num="27" count="49" type="cond" truecount="3" falsecount="1"/>
+        <line num="18" count="97" type="stmt"/>
+        <line num="19" count="97" type="stmt"/>
+        <line num="21" count="97" type="stmt"/>
+        <line num="22" count="97" type="stmt"/>
+        <line num="25" count="97" type="stmt"/>
+        <line num="27" count="97" type="cond" truecount="3" falsecount="1"/>
         <line num="33" count="0" type="stmt"/>
         <line num="34" count="0" type="stmt"/>
         <line num="36" count="0" type="stmt"/>
@@ -965,13 +965,13 @@
         <line num="67" count="0" type="stmt"/>
         <line num="70" count="0" type="stmt"/>
         <line num="71" count="0" type="stmt"/>
-        <line num="79" count="10" type="cond" truecount="2" falsecount="3"/>
+        <line num="79" count="59" type="cond" truecount="2" falsecount="3"/>
         <line num="80" count="0" type="stmt"/>
         <line num="81" count="0" type="stmt"/>
         <line num="82" count="0" type="stmt"/>
         <line num="84" count="0" type="stmt"/>
-        <line num="93" count="22" type="stmt"/>
-        <line num="94" count="22" type="cond" truecount="2" falsecount="3"/>
+        <line num="93" count="267" type="stmt"/>
+        <line num="94" count="267" type="cond" truecount="2" falsecount="3"/>
         <line num="95" count="0" type="stmt"/>
         <line num="96" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="97" count="0" type="stmt"/>
@@ -981,55 +981,55 @@
         <line num="102" count="0" type="stmt"/>
         <line num="104" count="0" type="stmt"/>
         <line num="105" count="0" type="stmt"/>
-        <line num="109" count="22" type="stmt"/>
-        <line num="110" count="22" type="cond" truecount="2" falsecount="0"/>
-        <line num="111" count="12" type="stmt"/>
-        <line num="114" count="10" type="cond" truecount="1" falsecount="1"/>
-        <line num="115" count="0" type="stmt"/>
-        <line num="116" count="0" type="stmt"/>
-        <line num="119" count="10" type="stmt"/>
-        <line num="120" count="10" type="stmt"/>
+        <line num="109" count="267" type="stmt"/>
+        <line num="110" count="267" type="cond" truecount="2" falsecount="0"/>
+        <line num="111" count="38" type="stmt"/>
+        <line num="114" count="229" type="cond" truecount="2" falsecount="0"/>
+        <line num="115" count="4" type="stmt"/>
+        <line num="116" count="4" type="stmt"/>
+        <line num="119" count="225" type="stmt"/>
+        <line num="120" count="225" type="stmt"/>
         <line num="123" count="0" type="stmt"/>
         <line num="124" count="0" type="stmt"/>
-        <line num="136" count="18" type="stmt"/>
-        <line num="137" count="18" type="cond" truecount="2" falsecount="3"/>
+        <line num="136" count="240" type="stmt"/>
+        <line num="137" count="240" type="cond" truecount="2" falsecount="3"/>
         <line num="138" count="0" type="stmt"/>
         <line num="139" count="0" type="stmt"/>
         <line num="140" count="0" type="stmt"/>
-        <line num="143" count="18" type="stmt"/>
-        <line num="144" count="18" type="stmt"/>
-        <line num="145" count="18" type="stmt"/>
+        <line num="143" count="240" type="stmt"/>
+        <line num="144" count="240" type="stmt"/>
+        <line num="145" count="240" type="stmt"/>
         <line num="148" count="0" type="stmt"/>
-        <line num="156" count="3" type="stmt"/>
-        <line num="157" count="3" type="cond" truecount="2" falsecount="3"/>
+        <line num="156" count="9" type="stmt"/>
+        <line num="157" count="9" type="cond" truecount="2" falsecount="3"/>
         <line num="158" count="0" type="stmt"/>
         <line num="159" count="0" type="stmt"/>
-        <line num="162" count="3" type="stmt"/>
-        <line num="163" count="3" type="stmt"/>
+        <line num="162" count="9" type="stmt"/>
+        <line num="163" count="9" type="stmt"/>
         <line num="166" count="0" type="stmt"/>
-        <line num="174" count="2" type="stmt"/>
-        <line num="175" count="2" type="cond" truecount="2" falsecount="3"/>
+        <line num="174" count="9" type="stmt"/>
+        <line num="175" count="9" type="cond" truecount="2" falsecount="3"/>
         <line num="176" count="0" type="stmt"/>
         <line num="177" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="178" count="0" type="stmt"/>
         <line num="179" count="0" type="stmt"/>
-        <line num="185" count="2" type="stmt"/>
-        <line num="186" count="2" type="stmt"/>
-        <line num="188" count="2" type="stmt"/>
-        <line num="189" count="7" type="cond" truecount="2" falsecount="0"/>
-        <line num="190" count="5" type="stmt"/>
-        <line num="191" count="5" type="stmt"/>
-        <line num="195" count="2" type="stmt"/>
+        <line num="185" count="9" type="stmt"/>
+        <line num="186" count="9" type="stmt"/>
+        <line num="188" count="9" type="stmt"/>
+        <line num="189" count="24" type="cond" truecount="2" falsecount="0"/>
+        <line num="190" count="13" type="stmt"/>
+        <line num="191" count="13" type="stmt"/>
+        <line num="195" count="9" type="stmt"/>
         <line num="200" count="0" type="stmt"/>
-        <line num="208" count="11" type="stmt"/>
-        <line num="209" count="11" type="cond" truecount="2" falsecount="3"/>
+        <line num="208" count="64" type="stmt"/>
+        <line num="209" count="64" type="cond" truecount="2" falsecount="3"/>
         <line num="210" count="0" type="stmt"/>
         <line num="211" count="0" type="stmt"/>
-        <line num="214" count="11" type="stmt"/>
-        <line num="215" count="11" type="stmt"/>
+        <line num="214" count="64" type="stmt"/>
+        <line num="215" count="64" type="stmt"/>
         <line num="218" count="0" type="stmt"/>
-        <line num="230" count="1" type="stmt"/>
-        <line num="241" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="230" count="6" type="stmt"/>
+        <line num="241" count="2" type="cond" truecount="1" falsecount="1"/>
       </file>
       <file name="incident.service.ts" path="D:\Workspace\vigil\backend\src\modules\statistics\services\incident.service.ts">
         <metrics statements="28" coveredstatements="27" conditionals="26" coveredconditionals="17" methods="5" coveredmethods="5"/>
