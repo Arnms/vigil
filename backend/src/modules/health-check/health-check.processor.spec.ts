@@ -7,6 +7,8 @@ import { HealthCheckProcessor } from './health-check.processor';
 import { Endpoint, EndpointStatus, HttpMethod } from '../endpoint/endpoint.entity';
 import { CheckResult, CheckStatus } from './check-result.entity';
 import { Incident } from '../incident/incident.entity';
+import { NotificationService } from '../notification/services/notification.service';
+import { WebsocketGateway } from '../websocket/websocket.gateway';
 
 describe('HealthCheckProcessor', () => {
   let processor: HealthCheckProcessor;
@@ -59,6 +61,21 @@ describe('HealthCheckProcessor', () => {
             axiosRef: {
               request: jest.fn(),
             },
+          },
+        },
+        {
+          provide: NotificationService,
+          useValue: {
+            sendAlertOnStatusChange: jest.fn(),
+          },
+        },
+        {
+          provide: WebsocketGateway,
+          useValue: {
+            broadcastCheckCompleted: jest.fn(),
+            broadcastStatusChange: jest.fn(),
+            broadcastIncidentStarted: jest.fn(),
+            broadcastIncidentResolved: jest.fn(),
           },
         },
       ],

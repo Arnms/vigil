@@ -35,7 +35,13 @@ describe('NotificationService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationService,
-        DuplicatePreventionService,
+        {
+          provide: DuplicatePreventionService,
+          useValue: {
+            isDuplicate: jest.fn().mockResolvedValue(false),
+            markSent: jest.fn().mockResolvedValue(undefined),
+          },
+        },
         {
           provide: getRepositoryToken(NotificationChannel),
           useValue: {

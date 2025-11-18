@@ -7,6 +7,7 @@ import { Endpoint, EndpointStatus } from './endpoint.entity';
 import { CheckResult } from '../health-check/check-result.entity';
 import { Incident } from '../incident/incident.entity';
 import { HealthCheckService } from '../health-check/health-check.service';
+import { WebsocketGateway } from '../websocket/websocket.gateway';
 import { CreateEndpointDto } from './dto';
 import { HttpMethod } from './endpoint.entity';
 
@@ -60,6 +61,14 @@ describe('EndpointService', () => {
             rescheduleHealthCheck: jest.fn(),
             unscheduleHealthCheck: jest.fn(),
             performHealthCheckNow: jest.fn(),
+          },
+        },
+        {
+          provide: WebsocketGateway,
+          useValue: {
+            broadcastEndpointCreated: jest.fn(),
+            broadcastEndpointUpdated: jest.fn(),
+            broadcastEndpointDeleted: jest.fn(),
           },
         },
       ],
