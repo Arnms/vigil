@@ -360,5 +360,431 @@ describe('HealthCheckProcessor', () => {
       const saveCall = (endpointRepository.save as jest.Mock).mock.calls[0][0];
       expect(saveCall.consecutiveFailures).toBe(0);
     });
+
+    it('should handle network unreachable error (ENETUNREACH)', async () => {
+      jest.spyOn(httpService.axiosRef, 'request').mockRejectedValue({
+        code: 'ENETUNREACH',
+        message: 'Network is unreachable',
+      });
+
+      jest
+        .spyOn(endpointRepository, 'findOne')
+        .mockResolvedValue(mockEndpoint);
+      jest
+        .spyOn(checkResultRepository, 'save')
+        .mockResolvedValue({
+          status: CheckStatus.FAILURE,
+          errorMessage: 'Network is unreachable',
+        } as any);
+      jest
+        .spyOn(endpointRepository, 'save')
+        .mockResolvedValue({
+          ...mockEndpoint,
+          consecutiveFailures: 1,
+        });
+      jest
+        .spyOn(incidentRepository, 'findOne')
+        .mockResolvedValue(null);
+      jest
+        .spyOn(incidentRepository, 'save')
+        .mockResolvedValue({} as any);
+
+      const job = {
+        data: { endpointId: mockEndpoint.id },
+      } as any;
+
+      const result = await processor.handleHealthCheck(job);
+
+      expect(result?.status).toBe(CheckStatus.FAILURE);
+      expect(result?.errorMessage).toBe('Network is unreachable');
+    });
+
+    it('should handle host unreachable error (EHOSTUNREACH)', async () => {
+      jest.spyOn(httpService.axiosRef, 'request').mockRejectedValue({
+        code: 'EHOSTUNREACH',
+        message: 'No route to host',
+      });
+
+      jest
+        .spyOn(endpointRepository, 'findOne')
+        .mockResolvedValue(mockEndpoint);
+      jest
+        .spyOn(checkResultRepository, 'save')
+        .mockResolvedValue({
+          status: CheckStatus.FAILURE,
+          errorMessage: 'Host is unreachable',
+        } as any);
+      jest
+        .spyOn(endpointRepository, 'save')
+        .mockResolvedValue({
+          ...mockEndpoint,
+          consecutiveFailures: 1,
+        });
+      jest
+        .spyOn(incidentRepository, 'findOne')
+        .mockResolvedValue(null);
+      jest
+        .spyOn(incidentRepository, 'save')
+        .mockResolvedValue({} as any);
+
+      const job = {
+        data: { endpointId: mockEndpoint.id },
+      } as any;
+
+      const result = await processor.handleHealthCheck(job);
+
+      expect(result?.status).toBe(CheckStatus.FAILURE);
+      expect(result?.errorMessage).toBe('Host is unreachable');
+    });
+
+    it('should handle status code mismatch', async () => {
+      jest.spyOn(httpService.axiosRef, 'request').mockResolvedValue({
+        status: 500,
+        data: { error: 'Server error' },
+      });
+
+      jest
+        .spyOn(endpointRepository, 'findOne')
+        .mockResolvedValue(mockEndpoint);
+      jest
+        .spyOn(checkResultRepository, 'save')
+        .mockResolvedValue({
+          endpointId: mockEndpoint.id,
+          status: CheckStatus.FAILURE,
+          statusCode: 500,
+          responseTime: 100,
+          errorMessage: 'Expected 200, got 500',
+        } as any);
+      jest
+        .spyOn(endpointRepository, 'save')
+        .mockResolvedValue({
+          ...mockEndpoint,
+          consecutiveFailures: 1,
+        });
+      jest
+        .spyOn(incidentRepository, 'findOne')
+        .mockResolvedValue(null);
+      jest
+        .spyOn(incidentRepository, 'save')
+        .mockResolvedValue({} as any);
+
+      const job = {
+        data: { endpointId: mockEndpoint.id },
+      } as any;
+
+      const result = await processor.handleHealthCheck(job);
+
+      expect(result?.status).toBe(CheckStatus.FAILURE);
+      expect(result?.errorMessage).toBe('Expected 200, got 500');
+      expect(result?.statusCode).toBe(500);
+    });
+
+    it('should transition to DOWN status after 3 consecutive failures', async () => {
+      jest.spyOn(httpService.axiosRef, 'request').mockRejectedValue({
+        code: 'ECONNREFUSED',
+      });
+
+      const failingEndpoint = {
+        ...mockEndpoint,
+        consecutiveFailures: 2,
+        currentStatus: EndpointStatus.UP,
+      };
+
+      jest
+        .spyOn(endpointRepository, 'findOne')
+        .mockResolvedValue(failingEndpoint);
+      jest
+        .spyOn(checkResultRepository, 'save')
+        .mockResolvedValue({
+          status: CheckStatus.FAILURE,
+        } as any);
+
+      jest
+        .spyOn(endpointRepository, 'save')
+        .mockResolvedValue(failingEndpoint);
+      jest
+        .spyOn(incidentRepository, 'findOne')
+        .mockResolvedValue(null);
+      jest
+        .spyOn(incidentRepository, 'save')
+        .mockResolvedValue({} as any);
+
+      const job = {
+        data: { endpointId: mockEndpoint.id },
+      } as any;
+
+      await processor.handleHealthCheck(job);
+
+      // consecutiveFailures가 3이 되어야 함
+      const saveCall = (endpointRepository.save as jest.Mock).mock.calls[0][0];
+      expect(saveCall.consecutiveFailures).toBe(3);
+    });
+
+    it('should record slow response time when exceeding 80% of threshold', async () => {
+      jest.spyOn(httpService.axiosRef, 'request').mockResolvedValue({
+        status: 200,
+        data: {},
+      });
+
+      const slowEndpoint = {
+        ...mockEndpoint,
+        timeoutThreshold: 5000,
+        currentStatus: EndpointStatus.UP,
+      };
+
+      jest
+        .spyOn(endpointRepository, 'findOne')
+        .mockResolvedValue(slowEndpoint);
+      jest
+        .spyOn(checkResultRepository, 'save')
+        .mockResolvedValue({
+          status: CheckStatus.SUCCESS,
+          responseTime: 4500,
+        } as any);
+
+      jest
+        .spyOn(endpointRepository, 'save')
+        .mockResolvedValue(slowEndpoint);
+      jest
+        .spyOn(incidentRepository, 'findOne')
+        .mockResolvedValue(null);
+      jest
+        .spyOn(incidentRepository, 'save')
+        .mockResolvedValue({} as any);
+
+      const job = {
+        data: { endpointId: mockEndpoint.id },
+      } as any;
+
+      const result = await processor.handleHealthCheck(job);
+
+      // 응답 시간이 기록되어야 함
+      expect(result?.responseTime).toBe(4500);
+    });
+
+    it('should remain UP when response time is below 80% of threshold', async () => {
+      jest.spyOn(httpService.axiosRef, 'request').mockResolvedValue({
+        status: 200,
+        data: {},
+      });
+
+      const fastEndpoint = {
+        ...mockEndpoint,
+        timeoutThreshold: 5000,
+        currentStatus: EndpointStatus.UP,
+      };
+
+      jest
+        .spyOn(endpointRepository, 'findOne')
+        .mockResolvedValue(fastEndpoint);
+      jest
+        .spyOn(checkResultRepository, 'save')
+        .mockResolvedValue({
+          status: CheckStatus.SUCCESS,
+          responseTime: 3000,
+        } as any);
+
+      const savedEndpoint = {
+        ...fastEndpoint,
+        currentStatus: EndpointStatus.UP,
+        lastResponseTime: 3000,
+        lastCheckedAt: new Date(),
+      };
+
+      jest
+        .spyOn(endpointRepository, 'save')
+        .mockResolvedValue(savedEndpoint);
+      jest
+        .spyOn(incidentRepository, 'findOne')
+        .mockResolvedValue(null);
+
+      const job = {
+        data: { endpointId: mockEndpoint.id },
+      } as any;
+
+      await processor.handleHealthCheck(job);
+
+      const saveCall = (endpointRepository.save as jest.Mock).mock.calls[0][0];
+      expect(saveCall.currentStatus).toBe(EndpointStatus.UP);
+    });
+
+    it('should handle incident lookup when endpoint status is DOWN', async () => {
+      jest.spyOn(httpService.axiosRef, 'request').mockRejectedValue({
+        code: 'ECONNREFUSED',
+        message: 'Connection refused',
+      });
+
+      const failingEndpoint = {
+        ...mockEndpoint,
+        consecutiveFailures: 2,
+        currentStatus: EndpointStatus.UP,
+      };
+
+      jest
+        .spyOn(endpointRepository, 'findOne')
+        .mockResolvedValue(failingEndpoint);
+      jest
+        .spyOn(checkResultRepository, 'save')
+        .mockResolvedValue({
+          status: CheckStatus.FAILURE,
+          errorMessage: 'Connection refused',
+        } as any);
+
+      jest
+        .spyOn(endpointRepository, 'save')
+        .mockResolvedValue(failingEndpoint);
+
+      const findOneSpy = jest
+        .spyOn(incidentRepository, 'findOne')
+        .mockResolvedValue(null);
+
+      jest
+        .spyOn(incidentRepository, 'save')
+        .mockResolvedValue({} as any);
+
+      const job = {
+        data: { endpointId: mockEndpoint.id },
+      } as any;
+
+      await processor.handleHealthCheck(job);
+
+      // 인시던트 조회가 호출되어야 함
+      expect(findOneSpy).toHaveBeenCalled();
+    });
+
+    it('should resolve incident when transitioning from DOWN to UP status', async () => {
+      jest.spyOn(httpService.axiosRef, 'request').mockResolvedValue({
+        status: 200,
+        data: {},
+      });
+
+      const downEndpoint = {
+        ...mockEndpoint,
+        consecutiveFailures: 3,
+        currentStatus: EndpointStatus.DOWN,
+      };
+
+      const existingIncident = {
+        id: 'incident-123',
+        endpointId: mockEndpoint.id,
+        startedAt: new Date(Date.now() - 60000),
+        resolvedAt: null,
+      } as any;
+
+      jest
+        .spyOn(endpointRepository, 'findOne')
+        .mockResolvedValue(downEndpoint);
+      jest
+        .spyOn(checkResultRepository, 'save')
+        .mockResolvedValue({
+          status: CheckStatus.SUCCESS,
+          responseTime: 100,
+        } as any);
+
+      jest
+        .spyOn(endpointRepository, 'save')
+        .mockResolvedValue({
+          ...downEndpoint,
+          consecutiveFailures: 0,
+          currentStatus: EndpointStatus.UP,
+        });
+      jest
+        .spyOn(incidentRepository, 'findOne')
+        .mockResolvedValue(existingIncident);
+
+      const resolvedIncident = {
+        ...existingIncident,
+        resolvedAt: new Date(),
+        duration: 60000,
+      };
+
+      jest
+        .spyOn(incidentRepository, 'save')
+        .mockResolvedValue(resolvedIncident);
+
+      const job = {
+        data: { endpointId: mockEndpoint.id },
+      } as any;
+
+      await processor.handleHealthCheck(job);
+
+      expect(incidentRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          resolvedAt: expect.any(Date),
+        }),
+      );
+    });
+
+    it('should handle timeout message pattern matching', async () => {
+      jest.spyOn(httpService.axiosRef, 'request').mockRejectedValue({
+        message: 'Request timeout: exceeded 5000ms limit',
+      });
+
+      jest
+        .spyOn(endpointRepository, 'findOne')
+        .mockResolvedValue(mockEndpoint);
+      jest
+        .spyOn(checkResultRepository, 'save')
+        .mockResolvedValue({
+          status: CheckStatus.FAILURE,
+          errorMessage: 'Timeout exceeded',
+        } as any);
+      jest
+        .spyOn(endpointRepository, 'save')
+        .mockResolvedValue({
+          ...mockEndpoint,
+          consecutiveFailures: 1,
+        });
+      jest
+        .spyOn(incidentRepository, 'findOne')
+        .mockResolvedValue(null);
+      jest
+        .spyOn(incidentRepository, 'save')
+        .mockResolvedValue({} as any);
+
+      const job = {
+        data: { endpointId: mockEndpoint.id },
+      } as any;
+
+      const result = await processor.handleHealthCheck(job);
+
+      expect(result?.errorMessage).toBe('Timeout exceeded');
+    });
+
+    it('should handle unknown error message', async () => {
+      jest.spyOn(httpService.axiosRef, 'request').mockRejectedValue({
+        message: 'Some unknown error occurred',
+      });
+
+      jest
+        .spyOn(endpointRepository, 'findOne')
+        .mockResolvedValue(mockEndpoint);
+      jest
+        .spyOn(checkResultRepository, 'save')
+        .mockResolvedValue({
+          status: CheckStatus.FAILURE,
+          errorMessage: 'Some unknown error occurred',
+        } as any);
+      jest
+        .spyOn(endpointRepository, 'save')
+        .mockResolvedValue({
+          ...mockEndpoint,
+          consecutiveFailures: 1,
+        });
+      jest
+        .spyOn(incidentRepository, 'findOne')
+        .mockResolvedValue(null);
+      jest
+        .spyOn(incidentRepository, 'save')
+        .mockResolvedValue({} as any);
+
+      const job = {
+        data: { endpointId: mockEndpoint.id },
+      } as any;
+
+      const result = await processor.handleHealthCheck(job);
+
+      expect(result?.errorMessage).toBe('Some unknown error occurred');
+    });
   });
 });
