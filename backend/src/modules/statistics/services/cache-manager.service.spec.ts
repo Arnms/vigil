@@ -811,4 +811,349 @@ describe('CacheManagerService', () => {
       expect(result1).toEqual(data);
     });
   });
+
+  describe('Redis integration paths', () => {
+    it('should handle Redis get operation when Redis is connected', async () => {
+      const mockRedisClient = {
+        get: jest.fn().mockResolvedValue(JSON.stringify({ data: 'redis-value' })),
+        setEx: jest.fn().mockResolvedValue('OK'),
+        del: jest.fn().mockResolvedValue(1),
+        keys: jest.fn().mockResolvedValue([]),
+        flushDb: jest.fn().mockResolvedValue('OK'),
+        quit: jest.fn().mockResolvedValue('OK'),
+        on: jest.fn(),
+        connect: jest.fn().mockResolvedValue(undefined),
+      };
+
+      // Simulate successful Redis initialization
+      jest.spyOn(require('redis'), 'createClient').mockReturnValue(mockRedisClient);
+
+      // Create new service instance with mocked Redis
+      const testModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          CacheManagerService,
+          {
+            provide: ConfigService,
+            useValue: mockConfigService,
+          },
+        ],
+      }).compile();
+
+      const redisService = testModule.get<CacheManagerService>(CacheManagerService);
+
+      // Manually simulate successful Redis connection
+      (redisService as any).useRedis = true;
+      (redisService as any).isConnected = true;
+      (redisService as any).client = mockRedisClient;
+
+      // Test Redis get operation
+      const result = await redisService.get('test-key');
+      expect(result).toEqual({ data: 'redis-value' });
+      expect(mockRedisClient.get).toHaveBeenCalledWith('test-key');
+
+      await redisService.onModuleDestroy();
+    });
+
+    it('should handle Redis set operation when Redis is connected', async () => {
+      const mockRedisClient = {
+        get: jest.fn().mockResolvedValue(null),
+        setEx: jest.fn().mockResolvedValue('OK'),
+        del: jest.fn().mockResolvedValue(1),
+        keys: jest.fn().mockResolvedValue([]),
+        flushDb: jest.fn().mockResolvedValue('OK'),
+        quit: jest.fn().mockResolvedValue('OK'),
+        on: jest.fn(),
+        connect: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const testModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          CacheManagerService,
+          {
+            provide: ConfigService,
+            useValue: mockConfigService,
+          },
+        ],
+      }).compile();
+
+      const redisService = testModule.get<CacheManagerService>(CacheManagerService);
+
+      // Manually simulate successful Redis connection
+      (redisService as any).useRedis = true;
+      (redisService as any).isConnected = true;
+      (redisService as any).client = mockRedisClient;
+
+      // Test Redis set operation
+      const testValue = { data: 'redis-set-test' };
+      await redisService.set('redis-key', testValue, 30);
+      expect(mockRedisClient.setEx).toHaveBeenCalledWith('redis-key', 30, JSON.stringify(testValue));
+
+      await redisService.onModuleDestroy();
+    });
+
+    it('should handle Redis delete operation when Redis is connected', async () => {
+      const mockRedisClient = {
+        get: jest.fn().mockResolvedValue(null),
+        setEx: jest.fn().mockResolvedValue('OK'),
+        del: jest.fn().mockResolvedValue(1),
+        keys: jest.fn().mockResolvedValue([]),
+        flushDb: jest.fn().mockResolvedValue('OK'),
+        quit: jest.fn().mockResolvedValue('OK'),
+        on: jest.fn(),
+        connect: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const testModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          CacheManagerService,
+          {
+            provide: ConfigService,
+            useValue: mockConfigService,
+          },
+        ],
+      }).compile();
+
+      const redisService = testModule.get<CacheManagerService>(CacheManagerService);
+
+      // Manually simulate successful Redis connection
+      (redisService as any).useRedis = true;
+      (redisService as any).isConnected = true;
+      (redisService as any).client = mockRedisClient;
+
+      // Test Redis delete operation
+      await redisService.delete('redis-delete-key');
+      expect(mockRedisClient.del).toHaveBeenCalledWith('redis-delete-key');
+
+      await redisService.onModuleDestroy();
+    });
+
+    it('should handle Redis deletePattern operation when Redis is connected', async () => {
+      const mockRedisClient = {
+        get: jest.fn().mockResolvedValue(null),
+        setEx: jest.fn().mockResolvedValue('OK'),
+        del: jest.fn().mockResolvedValue(2),
+        keys: jest.fn().mockResolvedValue(['key1:pattern', 'key2:pattern']),
+        flushDb: jest.fn().mockResolvedValue('OK'),
+        quit: jest.fn().mockResolvedValue('OK'),
+        on: jest.fn(),
+        connect: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const testModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          CacheManagerService,
+          {
+            provide: ConfigService,
+            useValue: mockConfigService,
+          },
+        ],
+      }).compile();
+
+      const redisService = testModule.get<CacheManagerService>(CacheManagerService);
+
+      // Manually simulate successful Redis connection
+      (redisService as any).useRedis = true;
+      (redisService as any).isConnected = true;
+      (redisService as any).client = mockRedisClient;
+
+      // Test Redis deletePattern operation
+      await redisService.deletePattern('key*:pattern');
+      expect(mockRedisClient.keys).toHaveBeenCalledWith('key*:pattern');
+      expect(mockRedisClient.del).toHaveBeenCalledWith(['key1:pattern', 'key2:pattern']);
+
+      await redisService.onModuleDestroy();
+    });
+
+    it('should handle Redis clearAll operation when Redis is connected', async () => {
+      const mockRedisClient = {
+        get: jest.fn().mockResolvedValue(null),
+        setEx: jest.fn().mockResolvedValue('OK'),
+        del: jest.fn().mockResolvedValue(1),
+        keys: jest.fn().mockResolvedValue([]),
+        flushDb: jest.fn().mockResolvedValue('OK'),
+        quit: jest.fn().mockResolvedValue('OK'),
+        on: jest.fn(),
+        connect: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const testModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          CacheManagerService,
+          {
+            provide: ConfigService,
+            useValue: mockConfigService,
+          },
+        ],
+      }).compile();
+
+      const redisService = testModule.get<CacheManagerService>(CacheManagerService);
+
+      // Manually simulate successful Redis connection
+      (redisService as any).useRedis = true;
+      (redisService as any).isConnected = true;
+      (redisService as any).client = mockRedisClient;
+
+      // Test Redis clearAll operation
+      await redisService.clearAll();
+      expect(mockRedisClient.flushDb).toHaveBeenCalled();
+
+      await redisService.onModuleDestroy();
+    });
+
+    it('should handle Redis parse error when stored value is invalid JSON', async () => {
+      const mockRedisClient = {
+        get: jest.fn().mockResolvedValue('invalid-json-{'),
+        setEx: jest.fn().mockResolvedValue('OK'),
+        del: jest.fn().mockResolvedValue(1),
+        keys: jest.fn().mockResolvedValue([]),
+        flushDb: jest.fn().mockResolvedValue('OK'),
+        quit: jest.fn().mockResolvedValue('OK'),
+        on: jest.fn(),
+        connect: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const testModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          CacheManagerService,
+          {
+            provide: ConfigService,
+            useValue: mockConfigService,
+          },
+        ],
+      }).compile();
+
+      const redisService = testModule.get<CacheManagerService>(CacheManagerService);
+
+      // Manually simulate successful Redis connection
+      (redisService as any).useRedis = true;
+      (redisService as any).isConnected = true;
+      (redisService as any).client = mockRedisClient;
+
+      // Test Redis get with invalid JSON
+      const result = await redisService.get('invalid-key');
+      expect(result).toBeNull();
+
+      await redisService.onModuleDestroy();
+    });
+
+    it('should handle Redis connection close on module destroy', async () => {
+      const mockRedisClient = {
+        get: jest.fn().mockResolvedValue(null),
+        setEx: jest.fn().mockResolvedValue('OK'),
+        del: jest.fn().mockResolvedValue(1),
+        keys: jest.fn().mockResolvedValue([]),
+        flushDb: jest.fn().mockResolvedValue('OK'),
+        quit: jest.fn().mockResolvedValue('OK'),
+        on: jest.fn(),
+        connect: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const testModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          CacheManagerService,
+          {
+            provide: ConfigService,
+            useValue: mockConfigService,
+          },
+        ],
+      }).compile();
+
+      const redisService = testModule.get<CacheManagerService>(CacheManagerService);
+
+      // Manually simulate successful Redis connection
+      (redisService as any).useRedis = true;
+      (redisService as any).isConnected = true;
+      (redisService as any).client = mockRedisClient;
+
+      // Test Redis quit on module destroy
+      await redisService.onModuleDestroy();
+      expect(mockRedisClient.quit).toHaveBeenCalled();
+    });
+
+    it('should handle Redis operation errors gracefully', async () => {
+      const mockRedisClient = {
+        get: jest.fn().mockRejectedValue(new Error('Redis connection lost')),
+        setEx: jest.fn().mockRejectedValue(new Error('Redis write failed')),
+        del: jest.fn().mockRejectedValue(new Error('Redis delete failed')),
+        keys: jest.fn().mockRejectedValue(new Error('Redis keys failed')),
+        flushDb: jest.fn().mockRejectedValue(new Error('Redis flush failed')),
+        quit: jest.fn().mockResolvedValue('OK'),
+        on: jest.fn(),
+        connect: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const testModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          CacheManagerService,
+          {
+            provide: ConfigService,
+            useValue: mockConfigService,
+          },
+        ],
+      }).compile();
+
+      const redisService = testModule.get<CacheManagerService>(CacheManagerService);
+
+      // Manually simulate successful Redis connection
+      (redisService as any).useRedis = true;
+      (redisService as any).isConnected = true;
+      (redisService as any).client = mockRedisClient;
+
+      // All operations should handle errors gracefully
+      const getResult = await redisService.get('error-key');
+      expect(getResult).toBeNull();
+
+      // Set should not throw
+      await expect(redisService.set('error-key', 'value')).resolves.not.toThrow();
+
+      // Delete should not throw
+      await expect(redisService.delete('error-key')).resolves.not.toThrow();
+
+      // DeletePattern should not throw
+      await expect(redisService.deletePattern('error:*')).resolves.not.toThrow();
+
+      // ClearAll should not throw
+      await expect(redisService.clearAll()).resolves.not.toThrow();
+
+      await redisService.onModuleDestroy();
+    });
+
+    it('should handle Redis deletePattern with no matching keys', async () => {
+      const mockRedisClient = {
+        get: jest.fn().mockResolvedValue(null),
+        setEx: jest.fn().mockResolvedValue('OK'),
+        del: jest.fn().mockResolvedValue(0),
+        keys: jest.fn().mockResolvedValue([]),
+        flushDb: jest.fn().mockResolvedValue('OK'),
+        quit: jest.fn().mockResolvedValue('OK'),
+        on: jest.fn(),
+        connect: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const testModule: TestingModule = await Test.createTestingModule({
+        providers: [
+          CacheManagerService,
+          {
+            provide: ConfigService,
+            useValue: mockConfigService,
+          },
+        ],
+      }).compile();
+
+      const redisService = testModule.get<CacheManagerService>(CacheManagerService);
+
+      // Manually simulate successful Redis connection
+      (redisService as any).useRedis = true;
+      (redisService as any).isConnected = true;
+      (redisService as any).client = mockRedisClient;
+
+      // Test Redis deletePattern with no results
+      await redisService.deletePattern('nonexistent:*');
+      expect(mockRedisClient.keys).toHaveBeenCalledWith('nonexistent:*');
+      // del should not be called if no keys match
+      expect(mockRedisClient.del).not.toHaveBeenCalled();
+
+      await redisService.onModuleDestroy();
+    });
+  });
 });
