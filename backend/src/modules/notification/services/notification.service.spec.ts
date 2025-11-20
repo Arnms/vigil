@@ -390,4 +390,91 @@ describe('NotificationService', () => {
       expect(mockEmailStrategy.send).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('Strategy Error Handling', () => {
+    const mockEndpoint = {
+      id: 'endpoint-1',
+      name: 'Test API',
+      url: 'https://api.test.com',
+    };
+
+    const mockCheckResult = {
+      responseTime: 100,
+      statusCode: 500,
+      errorMessage: 'Error',
+    };
+
+    it('should skip notification when strategy is not implemented', async () => {
+      const channelWithoutStrategy = {
+        ...mockChannel,
+        type: 'WEBHOOK' as any,
+      };
+
+      jest
+        .spyOn(channelRepository, 'find')
+        .mockResolvedValueOnce([channelWithoutStrategy]);
+
+      // Should not throw, just skip
+      await service.sendAlertOnStatusChange(
+        mockEndpoint,
+        'UP',
+        'DOWN',
+        mockCheckResult,
+      );
+
+      expect(mockEmailStrategy.send).not.toHaveBeenCalled();
+    });
+
+    it('should continue sending to other channels even if one fails', async () => {
+      const emailChannel = {
+        ...mockChannel,
+        id: 'email-channel',
+        type: NotificationType.EMAIL,
+      };
+
+      const slackChannel = {
+        ...mockChannel,
+        id: 'slack-channel',
+        type: NotificationType.SLACK,
+      };
+
+      jest
+        .spyOn(channelRepository, 'find')
+        .mockResolvedValueOnce([emailChannel, slackChannel]);
+
+      // Email strategy fails
+      jest.spyOn(mockEmailStrategy, 'send').mockRejectedValueOnce(new Error('SMTP Error'));
+
+      // Should not throw, continue to Slack
+      await service.sendAlertOnStatusChange(
+        mockEndpoint,
+        'UP',
+        'DOWN',
+        mockCheckResult,
+      );
+
+      expect(mockEmailStrategy.send).toHaveBeenCalled();
+      expect(mockSlackStrategy.send).toHaveBeenCalled();
+    });
+
+    it('should handle strategy send error gracefully', async () => {
+      jest
+        .spyOn(channelRepository, 'find')
+        .mockResolvedValueOnce([mockChannel]);
+
+      jest
+        .spyOn(mockEmailStrategy, 'send')
+        .mockRejectedValueOnce(new Error('Network Error'));
+
+      // Should not throw
+      await expect(
+        service.sendAlertOnStatusChange(
+          mockEndpoint,
+          'UP',
+          'DOWN',
+          mockCheckResult,
+        ),
+      ).resolves.not.toThrow();
+    });
+  });
 });
