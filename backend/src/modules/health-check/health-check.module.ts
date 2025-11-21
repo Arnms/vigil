@@ -9,6 +9,7 @@ import { Endpoint } from '../endpoint/endpoint.entity';
 import { CheckResult } from './check-result.entity';
 import { Incident } from '../incident/incident.entity';
 import { NotificationModule } from '../notification/notification.module';
+import { WebsocketModule } from '../websocket/websocket.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { NotificationModule } from '../notification/notification.module';
     TypeOrmModule.forFeature([Endpoint, CheckResult, Incident]),
     HttpModule,
     NotificationModule, // 알림 시스템 통합
+    WebsocketModule, // WebsocketGateway 사용을 위해 import
   ],
   providers: [HealthCheckService, HealthCheckProcessor],
   exports: [HealthCheckService], // 다른 모듈에서 사용 가능

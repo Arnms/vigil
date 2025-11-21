@@ -86,6 +86,7 @@ export class EndpointController {
    * 수동 헬스 체크
    */
   @Post(':id/check')
+  @HttpCode(200)
   @ApiOperation({ summary: '수동 헬스 체크' })
   @ApiResponse({
     status: 200,

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Endpoint } from '../src/modules/endpoint/endpoint.entity';
@@ -38,8 +38,6 @@ describe('Endpoints Module E2E Tests', () => {
   });
 
   afterAll(async () => {
-    // Clean up test data
-    await endpointRepository.delete({});
     await app.close();
   });
 
