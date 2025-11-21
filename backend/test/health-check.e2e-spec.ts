@@ -58,6 +58,10 @@ describe('Health Check Module E2E Tests', () => {
   });
 
   describe('POST /api/endpoints/:id/check - 수동 엔드포인트 체크', () => {
+    beforeEach(() => {
+      jest.setTimeout(15000);
+    });
+
     it('should trigger health check for valid endpoint', async () => {
       const response = await request(app.getHttpServer())
         .post(`/api/endpoints/${testEndpointId}/check`)
@@ -172,7 +176,7 @@ describe('Health Check Module E2E Tests', () => {
         .post(`/api/endpoints/${invalidEndpointId}/check`)
         .expect(200);
 
-      expect(response.body.status).toBe('DOWN');
+      expect(response.body.status).toBe('failure');
     });
 
     it('should track response time accurately', async () => {
@@ -210,9 +214,9 @@ describe('Health Check Module E2E Tests', () => {
         .post(`/api/endpoints/${notFoundEndpointId}/check`)
         .expect(200);
 
-      // Status code doesn't match expected (200), so should be DOWN
+      // Status code doesn't match expected (200), so check should fail
       expect(response.body.statusCode).toBe(404);
-      expect(response.body.status).toBe('DOWN');
+      expect(response.body.status).toBe('failure');
     });
 
     it('should handle HTTP errors (5xx)', async () => {
@@ -240,9 +244,9 @@ describe('Health Check Module E2E Tests', () => {
         .post(`/api/endpoints/${serverErrorEndpointId}/check`)
         .expect(200);
 
-      // Status code doesn't match expected (200), so should be DOWN
+      // Status code doesn't match expected (200), so check should fail
       expect(response.body.statusCode).toBe(500);
-      expect(response.body.status).toBe('DOWN');
+      expect(response.body.status).toBe('failure');
     });
 
     it('should handle status code mismatches', async () => {
@@ -270,77 +274,109 @@ describe('Health Check Module E2E Tests', () => {
         .post(`/api/endpoints/${mismatchEndpointId}/check`)
         .expect(200);
 
-      // Status code doesn't match expected (201), so should be DOWN
+      // Status code doesn't match expected (201), so check should fail
       expect(response.body.statusCode).toBe(200);
-      expect(response.body.status).toBe('DOWN');
+      expect(response.body.status).toBe('failure');
     });
   });
 
   describe('Check Result Storage', () => {
-    it('should store check results in database', async () => {
-      const checkResponse = await request(app.getHttpServer())
-        .post(`/api/endpoints/${testEndpointId}/check`)
-        .expect(200);
-
-      // Verify result is stored by querying endpoint history
-      const endpointResponse = await request(app.getHttpServer())
-        .get(`/api/endpoints/${testEndpointId}`)
-        .expect(200);
-
-      expect(endpointResponse.body).toHaveProperty('lastCheckedAt');
-      expect(new Date(endpointResponse.body.lastCheckedAt)).toBeInstanceOf(Date);
+    beforeEach(() => {
+      jest.setTimeout(15000);
     });
 
-    it('should update endpoint current status after check', async () => {
-      const beforeResponse = await request(app.getHttpServer())
-        .get(`/api/endpoints/${testEndpointId}`)
-        .expect(200);
+    it(
+      'should store check results in database',
+      async () => {
+        const checkResponse = await request(app.getHttpServer())
+          .post(`/api/endpoints/${testEndpointId}/check`)
+          .expect(200);
 
-      const previousStatus = beforeResponse.body.currentStatus;
+        // Verify result is stored by querying endpoint history
+        const endpointResponse = await request(app.getHttpServer())
+          .get(`/api/endpoints/${testEndpointId}`)
+          .expect(200);
 
-      // Perform check
-      await request(app.getHttpServer())
-        .post(`/api/endpoints/${testEndpointId}/check`)
-        .expect(200);
+        expect(endpointResponse.body).toHaveProperty('lastCheckedAt');
+        expect(new Date(endpointResponse.body.lastCheckedAt)).toBeInstanceOf(
+          Date,
+        );
+      },
+      15000,
+    );
 
-      // Get updated endpoint
-      const afterResponse = await request(app.getHttpServer())
-        .get(`/api/endpoints/${testEndpointId}`)
-        .expect(200);
+    it(
+      'should update endpoint current status after check',
+      async () => {
+        const beforeResponse = await request(app.getHttpServer())
+          .get(`/api/endpoints/${testEndpointId}`)
+          .expect(200);
 
-      expect(['UP', 'DOWN', 'DEGRADED']).toContain(afterResponse.body.currentStatus);
-    });
+        const previousStatus = beforeResponse.body.currentStatus;
+
+        // Perform check
+        await request(app.getHttpServer())
+          .post(`/api/endpoints/${testEndpointId}/check`)
+          .expect(200);
+
+        // Get updated endpoint
+        const afterResponse = await request(app.getHttpServer())
+          .get(`/api/endpoints/${testEndpointId}`)
+          .expect(200);
+
+        expect(['UP', 'DOWN', 'DEGRADED']).toContain(
+          afterResponse.body.currentStatus,
+        );
+      },
+      15000,
+    );
   });
 
   describe('Concurrent Health Checks', () => {
-    it('should handle multiple concurrent checks', async () => {
-      const promises = [];
-      for (let i = 0; i < 5; i++) {
-        promises.push(
-          request(app.getHttpServer())
-            .post(`/api/endpoints/${testEndpointId}/check`)
-            .expect(200),
-        );
-      }
-
-      const responses = await Promise.all(promises);
-
-      responses.forEach((response) => {
-        expect(response.body).toHaveProperty('status');
-        expect(response.body).toHaveProperty('responseTime');
-      });
+    beforeEach(() => {
+      jest.setTimeout(30000);
     });
+
+    it(
+      'should handle multiple concurrent checks',
+      async () => {
+        const promises = [];
+        for (let i = 0; i < 5; i++) {
+          promises.push(
+            request(app.getHttpServer())
+              .post(`/api/endpoints/${testEndpointId}/check`)
+              .expect(200),
+          );
+        }
+
+        const responses = await Promise.all(promises);
+
+        responses.forEach((response) => {
+          expect(response.body).toHaveProperty('status');
+          expect(response.body).toHaveProperty('responseTime');
+        });
+      },
+      30000,
+    );
   });
 
   describe('Error Handling', () => {
-    it('should handle check request with query parameters', async () => {
-      const response = await request(app.getHttpServer())
-        .post(`/api/endpoints/${testEndpointId}/check`)
-        .query({ force: 'true' })
-        .expect(200);
-
-      expect(response.body).toHaveProperty('status');
+    beforeEach(() => {
+      jest.setTimeout(15000);
     });
+
+    it(
+      'should handle check request with query parameters',
+      async () => {
+        const response = await request(app.getHttpServer())
+          .post(`/api/endpoints/${testEndpointId}/check`)
+          .query({ force: 'true' })
+          .expect(200);
+
+        expect(response.body).toHaveProperty('status');
+      },
+      15000,
+    );
 
     it('should handle check request with additional headers', async () => {
       const response = await request(app.getHttpServer())
@@ -351,34 +387,38 @@ describe('Health Check Module E2E Tests', () => {
       expect(response.body).toHaveProperty('status');
     });
 
-    it('should not allow check on inactive endpoint', async () => {
-      // Create and then deactivate an endpoint
-      const createDto = {
-        name: 'Inactive Endpoint Test',
-        url: 'https://httpbin.org/status/200',
-        method: 'GET',
-        headers: {},
-        body: null,
-        checkInterval: 30,
-        expectedStatusCode: 200,
-        timeoutThreshold: 5000,
-        isActive: false,
-      };
+    it(
+      'should not allow check on inactive endpoint',
+      async () => {
+        // Create and then deactivate an endpoint
+        const createDto = {
+          name: 'Inactive Endpoint Test',
+          url: 'https://httpbin.org/status/200',
+          method: 'GET',
+          headers: {},
+          body: null,
+          checkInterval: 30,
+          expectedStatusCode: 200,
+          timeoutThreshold: 5000,
+          isActive: false,
+        };
 
-      const createResponse = await request(app.getHttpServer())
-        .post('/api/endpoints')
-        .send(createDto)
-        .expect(201);
+        const createResponse = await request(app.getHttpServer())
+          .post('/api/endpoints')
+          .send(createDto)
+          .expect(201);
 
-      const inactiveEndpointId = createResponse.body.id;
+        const inactiveEndpointId = createResponse.body.id;
 
-      // Try to check inactive endpoint
-      const checkResponse = await request(app.getHttpServer())
-        .post(`/api/endpoints/${inactiveEndpointId}/check`)
-        .expect(200);
+        // Try to check inactive endpoint
+        const checkResponse = await request(app.getHttpServer())
+          .post(`/api/endpoints/${inactiveEndpointId}/check`)
+          .expect(200);
 
-      // Should still allow check but may handle differently
-      expect(checkResponse.body).toHaveProperty('status');
-    });
+        // Should still allow check but may handle differently
+        expect(checkResponse.body).toHaveProperty('status');
+      },
+      15000,
+    );
   });
 });

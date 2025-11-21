@@ -48,12 +48,8 @@ export class HealthCheckProcessor {
         throw new Error(`Endpoint not found: ${endpointId}`);
       }
 
-      if (!endpoint.isActive) {
-        this.logger.debug(`Endpoint is not active, skipping: ${endpointId}`);
-        return null;
-      }
-
       // 2️⃣ HTTP 요청 수행 및 응답 분석
+      // Note: Check endpoint even if inactive (inactive flag is just for scheduled checks)
       const checkResult = await this.performHttpRequest(endpoint);
 
       // 3️⃣ CheckResult 저장

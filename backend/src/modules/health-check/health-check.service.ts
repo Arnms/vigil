@@ -16,6 +16,8 @@ export class HealthCheckService {
     private healthCheckQueue: Queue,
     @InjectRepository(Endpoint)
     private endpointRepository: Repository<Endpoint>,
+    @InjectRepository(CheckResult)
+    private checkResultRepository: Repository<CheckResult>,
   ) {}
 
   /**
@@ -146,15 +148,21 @@ export class HealthCheckService {
       this.logger.log(`Manual health check queued for endpoint ${endpoint.id}`);
 
       // 작업 완료 대기
-      return new Promise((resolve, reject) => {
-        job
-          .finished()
-          .then(() => {
-            // Processor에서 저장한 결과 반환
-            resolve(job.returnvalue as CheckResult);
-          })
-          .catch(reject);
+      await job.finished();
+
+      // DB에서 가장 최근의 체크 결과 조회
+      const checkResult = await this.checkResultRepository.findOne({
+        where: { endpointId: endpoint.id },
+        order: { checkedAt: 'DESC' },
       });
+
+      if (!checkResult) {
+        throw new Error(
+          `Check result not found for endpoint ${endpoint.id} after job completion`,
+        );
+      }
+
+      return checkResult;
     } catch (error) {
       this.logger.error(
         `Failed to perform manual health check for endpoint ${endpoint.id}: ${error.message}`,
