@@ -94,9 +94,11 @@ export class EndpointService {
       });
     }
 
-    // 정렬
-    const sortColumn = `endpoint.${query.sortBy}`;
-    qb = qb.orderBy(sortColumn, query.order);
+    // 정렬 (기본값 설정)
+    const sortBy = query.sortBy || 'createdAt';
+    const order = query.order || 'DESC';
+    const sortColumn = `endpoint.${sortBy}`;
+    qb = qb.orderBy(sortColumn, order as 'ASC' | 'DESC');
 
     // 페이지네이션 전 전체 개수 조회
     const total = await qb.getCount();
