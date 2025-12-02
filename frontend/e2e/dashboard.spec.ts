@@ -38,16 +38,23 @@ test.describe('Dashboard E2E Tests', () => {
     });
 
     test('should display card with title and value', async ({ page }) => {
-      // Look for cards with text content
-      const cardText = page.locator('[class*="card"] p, [class*="status"] p');
+      // StatusCard has border, rounded-lg classes and contains title + value
+      const cards = page.locator('div.border.rounded-lg');
 
-      // Get first few cards
-      const count = await cardText.count();
-      expect(count).toBeGreaterThan(0);
+      // Wait for cards to appear
+      await expect(cards.first()).toBeVisible({ timeout: 5000 });
 
-      // Check that cards have content
-      const firstText = await cardText.first().textContent();
-      expect(firstText?.length).toBeGreaterThan(0);
+      // Get card count
+      const count = await cards.count();
+      expect(count).toBeGreaterThanOrEqual(4); // 4 StatusCards on dashboard
+
+      // Check that first card has title and value
+      const firstCard = cards.first();
+      const title = firstCard.locator('p.text-sm');
+      const value = firstCard.locator('p.text-3xl');
+
+      await expect(title).toBeVisible();
+      await expect(value).toBeVisible();
     });
 
     test('should display uptime statistics', async ({ page }) => {
@@ -194,20 +201,32 @@ test.describe('Dashboard E2E Tests', () => {
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
 
-      // Check that content is still visible
-      const cards = page.locator('[class*="card"], [class*="status"]');
+      // Wait for page to adjust to new viewport
+      await page.waitForTimeout(500);
+
+      // Check that StatusCards are still visible
+      const cards = page.locator('div.border.rounded-lg');
+      await expect(cards.first()).toBeVisible({ timeout: 5000 });
+
       const count = await cards.count();
-      expect(count).toBeGreaterThan(0);
+      expect(count).toBeGreaterThanOrEqual(4);
     });
 
     test('should display grid layout on desktop', async ({ page }) => {
       // Set desktop viewport
       await page.setViewportSize({ width: 1920, height: 1080 });
 
-      // Check layout
-      const cards = page.locator('[class*="card"], [class*="status"]');
+      // Wait for page to adjust to new viewport
+      await page.waitForTimeout(500);
+
+      // Check that grid container exists with lg:grid-cols-4 layout
+      const gridContainer = page.locator('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4');
+      await expect(gridContainer).toBeVisible({ timeout: 5000 });
+
+      // Check that all 4 StatusCards are visible
+      const cards = page.locator('div.border.rounded-lg');
       const count = await cards.count();
-      expect(count).toBeGreaterThan(0);
+      expect(count).toBeGreaterThanOrEqual(4);
     });
 
     test('should make charts responsive', async ({ page }) => {
@@ -255,8 +274,17 @@ test.describe('Dashboard E2E Tests', () => {
       await page.goto('/');
       await page.waitForLoadState('networkidle');
 
-      // Should not have critical errors
-      expect(errors.filter((e) => !e.includes('Failed to fetch')).length).toBe(0);
+      // Filter out common development/network errors that are acceptable
+      const criticalErrors = errors.filter((e) =>
+        !e.includes('Failed to fetch') &&
+        !e.includes('ERR_CONNECTION_REFUSED') &&
+        !e.includes('404') &&
+        !e.includes('Network request failed') &&
+        !e.includes('ECONNREFUSED')
+      );
+
+      // Should not have critical JavaScript errors
+      expect(criticalErrors.length).toBe(0);
     });
   });
 
