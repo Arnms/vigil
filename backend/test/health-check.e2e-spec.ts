@@ -26,7 +26,14 @@ describe('Health Check Module E2E Tests', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+      }),
+    );
     await app.init();
 
     // Get repository for cleanup
@@ -92,36 +99,41 @@ describe('Health Check Module E2E Tests', () => {
         .post(`/api/endpoints/${testEndpointId}/check`)
         .expect(200);
 
-      expect(['UP', 'DOWN', 'DEGRADED']).toContain(response.body.status);
+      // CheckResult.status는 'success' 또는 'failure'
+      expect(['success', 'failure']).toContain(response.body.status);
     });
 
-    it('should handle endpoints with POST method', async () => {
-      // Create a POST endpoint
-      const createDto = {
-        name: 'POST Health Check Test',
-        url: 'https://httpbin.org/post',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: { test: 'data' },
-        checkInterval: 30,
-        expectedStatusCode: 200,
-        timeoutThreshold: 5000,
-      };
+    it(
+      'should handle endpoints with POST method',
+      async () => {
+        // Create a POST endpoint
+        const createDto = {
+          name: 'POST Health Check Test',
+          url: 'https://httpbin.org/post',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: { test: 'data' },
+          checkInterval: 30,
+          expectedStatusCode: 200,
+          timeoutThreshold: 5000,
+        };
 
-      const createResponse = await request(app.getHttpServer())
-        .post('/api/endpoints')
-        .send(createDto)
-        .expect(201);
+        const createResponse = await request(app.getHttpServer())
+          .post('/api/endpoints')
+          .send(createDto)
+          .expect(201);
 
-      const postEndpointId = createResponse.body.id;
+        const postEndpointId = createResponse.body.id;
 
-      // Perform check
-      const checkResponse = await request(app.getHttpServer())
-        .post(`/api/endpoints/${postEndpointId}/check`)
-        .expect(200);
+        // Perform check
+        const checkResponse = await request(app.getHttpServer())
+          .post(`/api/endpoints/${postEndpointId}/check`)
+          .expect(200);
 
-      expect(checkResponse.body).toHaveProperty('status');
-    });
+        expect(checkResponse.body).toHaveProperty('status');
+      },
+      15000,
+    );
 
     it('should handle timeout scenarios', async () => {
       // Create an endpoint with very short timeout (likely to timeout)
@@ -148,7 +160,8 @@ describe('Health Check Module E2E Tests', () => {
         .post(`/api/endpoints/${timeoutEndpointId}/check`)
         .expect(200);
 
-      expect(['DOWN', 'DEGRADED']).toContain(response.body.status);
+      // Timeout은 CheckResult.status가 'failure'
+      expect(response.body.status).toBe('failure');
     });
 
     it('should handle invalid URL in endpoint', async () => {
@@ -249,35 +262,39 @@ describe('Health Check Module E2E Tests', () => {
       expect(response.body.status).toBe('failure');
     });
 
-    it('should handle status code mismatches', async () => {
-      // Create endpoint expecting 201 but gets 200
-      const createDto = {
-        name: 'Status Mismatch Test',
-        url: 'https://httpbin.org/status/200',
-        method: 'GET',
-        headers: {},
-        body: null,
-        checkInterval: 30,
-        expectedStatusCode: 201,
-        timeoutThreshold: 5000,
-      };
+    it(
+      'should handle status code mismatches',
+      async () => {
+        // Create endpoint expecting 201 but gets 200
+        const createDto = {
+          name: 'Status Mismatch Test',
+          url: 'https://httpbin.org/status/200',
+          method: 'GET',
+          headers: {},
+          body: null,
+          checkInterval: 30,
+          expectedStatusCode: 201,
+          timeoutThreshold: 5000,
+        };
 
-      const createResponse = await request(app.getHttpServer())
-        .post('/api/endpoints')
-        .send(createDto)
-        .expect(201);
+        const createResponse = await request(app.getHttpServer())
+          .post('/api/endpoints')
+          .send(createDto)
+          .expect(201);
 
-      const mismatchEndpointId = createResponse.body.id;
+        const mismatchEndpointId = createResponse.body.id;
 
-      // Perform check
-      const response = await request(app.getHttpServer())
-        .post(`/api/endpoints/${mismatchEndpointId}/check`)
-        .expect(200);
+        // Perform check
+        const response = await request(app.getHttpServer())
+          .post(`/api/endpoints/${mismatchEndpointId}/check`)
+          .expect(200);
 
-      // Status code doesn't match expected (201), so check should fail
-      expect(response.body.statusCode).toBe(200);
-      expect(response.body.status).toBe('failure');
-    });
+        // Status code doesn't match expected (201), so check should fail
+        expect(response.body.statusCode).toBe(200);
+        expect(response.body.status).toBe('failure');
+      },
+      15000,
+    );
   });
 
   describe('Check Result Storage', () => {

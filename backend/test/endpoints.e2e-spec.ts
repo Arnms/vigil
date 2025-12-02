@@ -28,14 +28,39 @@ describe('Endpoints Module E2E Tests', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+      }),
+    );
     await app.init();
 
     // Get repository for cleanup
     endpointRepository = moduleFixture.get<Repository<Endpoint>>(
       getRepositoryToken(Endpoint),
     );
-  });
+
+    // Create a test endpoint for subsequent tests
+    const createDto = {
+      name: 'Test API',
+      url: 'https://api.example.com/health',
+      method: 'GET',
+      headers: {},
+      body: null,
+      checkInterval: 30,
+      expectedStatusCode: 200,
+      timeoutThreshold: 5000,
+    };
+
+    const response = await request(app.getHttpServer())
+      .post('/api/endpoints')
+      .send(createDto);
+
+    createdEndpointId = response.body.id;
+  }, 30000);
 
   afterAll(async () => {
     await app.close();
@@ -164,8 +189,10 @@ describe('Endpoints Module E2E Tests', () => {
         .get('/api/endpoints')
         .expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.length).toBeGreaterThan(0);
+      expect(response.body).toHaveProperty('data');
+      expect(response.body).toHaveProperty('meta');
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data.length).toBeGreaterThan(0);
     });
 
     it('should return paginated results with limit and page', async () => {
@@ -174,7 +201,11 @@ describe('Endpoints Module E2E Tests', () => {
         .query({ page: 1, limit: 10 })
         .expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body).toHaveProperty('data');
+      expect(response.body).toHaveProperty('meta');
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.meta).toHaveProperty('page', 1);
+      expect(response.body.meta).toHaveProperty('limit', 10);
     });
 
     it('should filter endpoints by status', async () => {
@@ -183,7 +214,8 @@ describe('Endpoints Module E2E Tests', () => {
         .query({ status: 'UP' })
         .expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body).toHaveProperty('data');
+      expect(Array.isArray(response.body.data)).toBe(true);
     });
 
     it('should support sorting by name', async () => {
@@ -192,7 +224,8 @@ describe('Endpoints Module E2E Tests', () => {
         .query({ sortBy: 'name', order: 'ASC' })
         .expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body).toHaveProperty('data');
+      expect(Array.isArray(response.body.data)).toBe(true);
     });
   });
 
@@ -350,11 +383,12 @@ describe('Endpoints Module E2E Tests', () => {
         .expect(400);
     });
 
-    it('should return 405 for unsupported HTTP methods', async () => {
+    it('should return 404 for unsupported HTTP methods', async () => {
+      // NestJS returns 404 when route doesn't exist, not 405
       await request(app.getHttpServer())
         .put('/api/endpoints')
         .send({})
-        .expect(405);
+        .expect(404);
     });
 
     it('should return proper error message for validation errors', async () => {

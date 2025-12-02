@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   ParseUUIDPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
@@ -52,7 +53,14 @@ export class EndpointController {
   @ApiResponse({ status: 200, description: 'Endpoint details', type: Endpoint })
   @ApiResponse({ status: 404, description: 'Endpoint not found' })
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Endpoint> {
-    return this.endpointService.findOne(id);
+    const endpoint = await this.endpointService.findOne(id);
+
+    // Soft-deleted 엔드포인트는 조회 불가
+    if (!endpoint.isActive) {
+      throw new NotFoundException(`Endpoint not found: ${id}`);
+    }
+
+    return endpoint;
   }
 
   /**
