@@ -36,7 +36,7 @@ export class HealthCheckProcessor {
 
   @Process('check')
   async handleHealthCheck(job: Job<HealthCheckJobData>): Promise<CheckResult | null> {
-    const { endpointId } = job.data;
+    const { endpointId, isManual } = job.data;
 
     try {
       // 1️⃣ 엔드포인트 정보 조회
@@ -48,8 +48,13 @@ export class HealthCheckProcessor {
         throw new Error(`Endpoint not found: ${endpointId}`);
       }
 
+      // 비활성 엔드포인트는 예약된 체크에서 건너뛰기 (수동 체크는 허용)
+      if (!endpoint.isActive && !isManual) {
+        this.logger.log(`Skipping check for inactive endpoint: ${endpointId}`);
+        return null;
+      }
+
       // 2️⃣ HTTP 요청 수행 및 응답 분석
-      // Note: Check endpoint even if inactive (inactive flag is just for scheduled checks)
       const checkResult = await this.performHttpRequest(endpoint);
 
       // 3️⃣ CheckResult 저장

@@ -45,15 +45,30 @@ describe('HealthCheckProcessor', () => {
         HealthCheckProcessor,
         {
           provide: getRepositoryToken(Endpoint),
-          useClass: Repository,
+          useValue: {
+            findOne: jest.fn(),
+            save: jest.fn(),
+            find: jest.fn(),
+            create: jest.fn(),
+          },
         },
         {
           provide: getRepositoryToken(CheckResult),
-          useClass: Repository,
+          useValue: {
+            save: jest.fn(),
+            findOne: jest.fn(),
+            find: jest.fn(),
+            create: jest.fn(),
+          },
         },
         {
           provide: getRepositoryToken(Incident),
-          useClass: Repository,
+          useValue: {
+            findOne: jest.fn(),
+            save: jest.fn(),
+            create: jest.fn(),
+            find: jest.fn(),
+          },
         },
         {
           provide: HttpService,

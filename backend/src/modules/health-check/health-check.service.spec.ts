@@ -46,6 +46,19 @@ describe('HealthCheckService', () => {
     incidents: [],
   };
 
+  let checkResultRepository: Repository<CheckResult>;
+
+  const mockCheckResult: CheckResult = {
+    id: 'check-123',
+    endpointId: mockEndpoint.id,
+    status: CheckStatus.SUCCESS,
+    responseTime: 150,
+    statusCode: 200,
+    errorMessage: null,
+    checkedAt: new Date(),
+    endpoint: mockEndpoint,
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -58,6 +71,17 @@ describe('HealthCheckService', () => {
           provide: getRepositoryToken(Endpoint),
           useValue: {
             findOne: jest.fn().mockResolvedValue(mockEndpoint),
+            find: jest.fn(),
+            save: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(CheckResult),
+          useValue: {
+            find: jest.fn(),
+            findOne: jest.fn().mockResolvedValue(mockCheckResult),
+            save: jest.fn(),
+            create: jest.fn(),
           },
         },
       ],
@@ -66,6 +90,9 @@ describe('HealthCheckService', () => {
     service = module.get<HealthCheckService>(HealthCheckService);
     endpointRepository = module.get<Repository<Endpoint>>(
       getRepositoryToken(Endpoint),
+    );
+    checkResultRepository = module.get<Repository<CheckResult>>(
+      getRepositoryToken(CheckResult),
     );
   });
 
@@ -282,23 +309,33 @@ describe('HealthCheckService', () => {
       await expect(service.performHealthCheckNow(mockEndpoint)).rejects.toThrow('Queue full');
     });
 
-    it('should use job return value as result', async () => {
-      const customResult = {
+    it('should return check result from database after job completion', async () => {
+      const customResult: CheckResult = {
         id: 'check-custom',
+        endpointId: mockEndpoint.id,
         status: CheckStatus.FAILURE,
         responseTime: 5000,
+        statusCode: 500,
+        errorMessage: 'Server error',
+        checkedAt: new Date(),
+        endpoint: mockEndpoint,
       };
 
       const mockJobWithCustomResult = {
         finished: jest.fn().mockResolvedValue({}),
-        returnvalue: customResult,
+        returnvalue: null,
       };
 
       (mockQueue.add as jest.Mock).mockResolvedValueOnce(mockJobWithCustomResult);
+      (checkResultRepository.findOne as jest.Mock).mockResolvedValueOnce(customResult);
 
       const result = await service.performHealthCheckNow(mockEndpoint);
 
       expect(result).toEqual(customResult);
+      expect(checkResultRepository.findOne).toHaveBeenCalledWith({
+        where: { endpointId: mockEndpoint.id },
+        order: { checkedAt: 'DESC' },
+      });
     });
   });
 });
