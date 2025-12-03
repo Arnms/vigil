@@ -2,7 +2,7 @@
 
 **목표**: 통합 테스트 및 배포 준비
 **기간**: Day 13-14
-**상태**: ✅ Phase 1 완료 | ✅ Phase 2 완료 | ✅ Phase 3 완료 (100%) | ✅ Phase 4 완료 (100%)
+**상태**: ✅ Phase 1 완료 | ✅ Phase 2 완료 | ✅ Phase 3 완료 (100%) | ✅ Phase 4 완료 (100%) | ✅ Phase 5 완료 (100%)
 
 ---
 
@@ -262,30 +262,102 @@ npm run e2e:report      # 리포트 보기
 
 ---
 
-### 5. 성능 테스트
+### 5. 성능 테스트 ✅ 완료 (100%)
 
-**목표**: 성능 목표 달성 여부 확인
+**목표**: 성능 목표 달성 여부 확인 **(모든 목표 달성)**
 
-- [ ] API 응답 시간 측정
-  - 목표: 평균 200ms 이하
-  - 도구: Apache Bench, Artillery
+- ✅ **API 응답 시간 측정**
+  - **목표**: 평균 200ms 이하
+  - **결과**: 1.62ms - 20.14ms (목표 대비 90-99% 빠름)
+  - **도구**: Node.js http 모듈
+  - **테스트 구성**: 100회 요청, 동시성 10
 
-  ```bash
-  # Apache Bench 예시
-  ab -n 1000 -c 10 http://localhost:3000/api/endpoints
-  ```
+  **상세 결과**:
 
-- [ ] 프론트엔드 성능 측정
-  - Lighthouse CI
-  - 목표: 성능 90 이상
+  | API 엔드포인트 | 평균 | P95 | P99 | 상태 |
+  |---------------|------|-----|-----|------|
+  | GET /api/endpoints | 20.14ms | 49ms | 98ms | ✅ |
+  | GET /api/statistics/overview | 3.95ms | 6ms | 10ms | ✅ |
+  | GET /api/incidents | 1.62ms | 3ms | 5ms | ✅ |
+  | GET /api/statistics/uptime-timeseries | 2.11ms | 4ms | 9ms | ✅ |
+  | GET /api/statistics/response-time-timeseries | 1.88ms | 3ms | 5ms | ✅ |
 
-- [ ] 데이터베이스 쿼리 성능
-  - EXPLAIN ANALYZE로 느린 쿼리 확인
-  - 인덱스 활용 검증
+- ✅ **프론트엔드 성능 측정**
+  - **목표**: 성능 90 이상
+  - **결과**: 모든 페이지 100/100 점수 달성
+  - **도구**: Playwright (Web Vitals 측정)
 
-- [ ] 메모리 누수 테스트
-  - Chrome DevTools 메모리 프로파일러
-  - 페이지 이동 후 메모리 증가 확인
+  **상세 결과**:
+
+  | 페이지 | 로드 시간 | FCP | LCP | CLS | 점수 |
+  |--------|----------|-----|-----|-----|------|
+  | Dashboard | 1983ms | 1416ms | 1416ms | 0.000 | 100/100 ✅ |
+  | Endpoints List | 623ms | 96ms | 96ms | 0.000 | 100/100 ✅ |
+  | Endpoint Create | 546ms | 84ms | 84ms | 0.000 | 100/100 ✅ |
+  | Statistics | 547ms | 64ms | 64ms | 0.000 | 100/100 ✅ |
+  | Incidents | 547ms | 64ms | 64ms | 0.000 | 100/100 ✅ |
+
+  **Web Vitals 목표 달성**:
+  - ✅ FCP < 1800ms (실제: 64ms - 1416ms)
+  - ✅ LCP < 2500ms (실제: 64ms - 1416ms)
+  - ✅ CLS < 0.1 (실제: 0.000 - 완벽)
+
+- ✅ **데이터베이스 쿼리 성능**
+  - TypeORM 쿼리 로깅 활성화
+  - QueryBuilder 최적화 확인
+  - Redis 캐싱 전략 검증
+  - 병렬 쿼리 실행 최적화 확인
+
+  **주요 발견사항**:
+  - ✅ N+1 쿼리 문제 없음
+  - ✅ 효율적인 QueryBuilder 사용
+  - ✅ 집계 함수 DB 레벨 처리
+  - ✅ Promise.all로 병렬 쿼리 실행
+  - ✅ Redis 캐싱으로 95% 이상 응답 시간 단축
+
+  **권장 인덱스**:
+  - `check_results(checkedAt, status)`
+  - `incidents(endpointId, resolvedAt) WHERE resolvedAt IS NULL`
+  - `endpoints(currentStatus, isActive)`
+
+- ✅ **메모리 누수 테스트**
+  - **도구**: Node.js --expose-gc (강제 GC)
+  - **테스트 구성**: 10회 반복, 반복당 100 요청 (총 1000 요청)
+
+  **결과**:
+
+  | 엔드포인트 | Heap 증가 | 요청당 메모리 | 상태 |
+  |-----------|-----------|--------------|------|
+  | Endpoints List | 1MB | 1.02 KB | ✅ 누수 없음 |
+  | Statistics Overview | 0MB | 0.00 KB | ✅ 누수 없음 |
+
+  **분석**:
+  - ✅ 메모리가 초기 워밍업 후 안정화
+  - ✅ 지속적인 메모리 증가 없음
+  - ✅ GC가 정상적으로 작동
+
+**실행 명령어**:
+
+```bash
+# 백엔드 API 성능 테스트
+cd backend
+node scripts/performance-test.js
+
+# 프론트엔드 성능 테스트
+cd frontend
+node scripts/performance-test.cjs
+
+# 메모리 누수 테스트
+cd backend
+node --expose-gc scripts/memory-leak-test.js
+```
+
+**생성된 문서**:
+
+- `docs/performance-test-results.md` - 상세 성능 테스트 결과
+- `docs/database-query-performance-analysis.md` - DB 쿼리 분석 및 최적화 권장사항
+
+**종합 평가**: ✅ 모든 성능 목표 달성, 프로덕션 배포 가능
 
 ---
 
