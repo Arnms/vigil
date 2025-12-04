@@ -12,6 +12,16 @@ dist/
 build/
 *.log
 
+# Test coverage and reports
+coverage/
+*/coverage/
+.nyc_output/
+test-results/
+*/test-results/
+playwright-report/
+*/playwright-report/
+*.lcov
+
 # IDE
 .vscode/
 .idea/
