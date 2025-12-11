@@ -11,3 +11,9 @@ playwright-report
 .git
 .gitignore
 README.md
+# Test files
+src/test
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
