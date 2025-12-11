@@ -11,6 +11,7 @@ import notificationConfig from './config/notification.config';
 import { getBullRootConfig } from './config/bull.config';
 import { EndpointModule } from './modules/endpoint/endpoint.module';
 import { HealthCheckModule } from './modules/health-check/health-check.module';
+import { IncidentModule } from './modules/incident/incident.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { StatisticsModule } from './modules/statistics/statistics.module';
 import { WebsocketModule } from './modules/websocket/websocket.module';
@@ -41,6 +42,7 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
     // Feature modules
     EndpointModule,
     HealthCheckModule,
+    IncidentModule,
     NotificationModule,
     StatisticsModule,
     WebsocketModule,
