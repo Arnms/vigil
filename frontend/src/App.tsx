@@ -10,17 +10,23 @@ import Statistics from './pages/Statistics'
 import NotFound from './pages/NotFound'
 import ToastContainer from './components/Common/ToastContainer'
 import { socketService } from './services/socket.service'
+import { useConnectionStore } from './stores/connection.store'
 
 export default function App() {
+  const initializeConnectionStore = useConnectionStore((state) => state.initialize)
+
   useEffect(() => {
     // 앱 시작 시 Socket 연결
     socketService.connect()
+
+    // Connection store 초기화 (socket 연결 후)
+    initializeConnectionStore()
 
     // 앱 종료 시 정리 (선택사항)
     return () => {
       // socketService.disconnect()
     }
-  }, [])
+  }, [initializeConnectionStore])
 
   return (
     <BrowserRouter>
