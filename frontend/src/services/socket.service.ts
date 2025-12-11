@@ -4,7 +4,7 @@ type SocketCallback = (data: any) => void
 
 class SocketService {
   private socket: Socket | null = null
-  private url: string = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+  private url: string = import.meta.env.VITE_API_BASE_URL || window.location.origin
   private reconnectAttempts = 0
   private maxReconnectAttempts = 10
   private baseDelay = 1000
