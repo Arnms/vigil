@@ -19,10 +19,10 @@ export default function Dashboard() {
   const {
     fetchOverview,
     fetchStatusDistribution,
-    fetchUptimeTimeseries,
-    fetchResponseTimeTimeseries,
+    fetchAllUptimeTimeseries,
+    fetchAllResponseTimeTimeseries,
     overview,
-    responseTimeTimeseries,
+    allResponseTimeTimeseries,
   } = useStatisticsStore()
 
   // 초기 데이터 로드
@@ -32,16 +32,16 @@ export default function Dashboard() {
     fetchIncidents()
     fetchOverview()
     fetchStatusDistribution()
-    fetchUptimeTimeseries('day')
-    fetchResponseTimeTimeseries('day')
+    fetchAllUptimeTimeseries('hourly', 24)
+    fetchAllResponseTimeTimeseries('hourly', 24)
   }, [
     fetchEndpoints,
     fetchRecentIncidents,
     fetchIncidents,
     fetchOverview,
     fetchStatusDistribution,
-    fetchUptimeTimeseries,
-    fetchResponseTimeTimeseries,
+    fetchAllUptimeTimeseries,
+    fetchAllResponseTimeTimeseries,
   ])
 
   // 5초마다 자동 새로고침
@@ -58,19 +58,20 @@ export default function Dashboard() {
   // 30초마다 차트 데이터 새로고침
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchUptimeTimeseries('day')
-      fetchResponseTimeTimeseries('day')
+      fetchAllUptimeTimeseries('hourly', 24)
+      fetchAllResponseTimeTimeseries('hourly', 24)
     }, 30000)
 
     return () => clearInterval(interval)
-  }, [fetchUptimeTimeseries, fetchResponseTimeTimeseries])
+  }, [fetchAllUptimeTimeseries, fetchAllResponseTimeTimeseries])
 
   // 기간 변경 시 데이터 갱신
   useEffect(() => {
-    const period = dateRange === '24h' ? 'day' : dateRange === '7d' ? 'week' : 'month'
-    fetchUptimeTimeseries(period)
-    fetchResponseTimeTimeseries(period)
-  }, [dateRange, fetchUptimeTimeseries, fetchResponseTimeTimeseries])
+    const hours = dateRange === '24h' ? 24 : dateRange === '7d' ? 168 : 720 // 24h, 7d, 30d
+    const period = dateRange === '24h' ? 'hourly' : 'daily'
+    fetchAllUptimeTimeseries(period as 'hourly' | 'daily', hours)
+    fetchAllResponseTimeTimeseries(period as 'hourly' | 'daily', hours)
+  }, [dateRange, fetchAllUptimeTimeseries, fetchAllResponseTimeTimeseries])
 
   // 통계 계산
   const activeIncidents = incidents.filter((i) => !i.resolvedAt).length
@@ -79,14 +80,12 @@ export default function Dashboard() {
   const avgUptime = overview?.overallUptime ?? 0
 
   // 응답시간 차트 데이터 변환
-  const responseTimeChartData = responseTimeTimeseries.map((item) => ({
+  const responseTimeChartData = allResponseTimeTimeseries.map((item: { timestamp: string; value: number }) => ({
     timestamp: new Date(item.timestamp).toLocaleTimeString('ko-KR', {
       hour: '2-digit',
       minute: '2-digit',
     }),
-    '평균 응답시간': item.avgResponseTime,
-    '최소': item.minResponseTime,
-    '최대': item.maxResponseTime,
+    '평균 응답시간': item.value,
   }))
 
   // 가동률 차트 데이터 변환 (엔드포인트의 현재 상태 기반)

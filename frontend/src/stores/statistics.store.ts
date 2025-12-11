@@ -25,6 +25,14 @@ interface StatisticsState {
     totalChecks: number
     failedChecks: number
   }>
+  allUptimeTimeseries: Array<{
+    timestamp: string
+    value: number
+  }>
+  allResponseTimeTimeseries: Array<{
+    timestamp: string
+    value: number
+  }>
   currentPeriod: 'day' | 'week' | 'month'
   selectedEndpointId: string | null
   isLoading: boolean
@@ -38,6 +46,8 @@ interface StatisticsState {
   fetchAllResponseTime: (period?: 'day' | 'week' | 'month') => Promise<void>
   fetchResponseTimeTimeseries: (endpointId: string, hours?: number) => Promise<void>
   fetchUptimeTimeseries: (endpointId: string, hours?: number) => Promise<void>
+  fetchAllUptimeTimeseries: (period?: 'hourly' | 'daily', hours?: number) => Promise<void>
+  fetchAllResponseTimeTimeseries: (period?: 'hourly' | 'daily', hours?: number) => Promise<void>
   fetchStatusDistribution: () => Promise<void>
 
   // 액션 - 상태 관리
@@ -54,6 +64,8 @@ const initialState = {
   statusDistribution: null,
   responseTimeTimeseries: [],
   uptimeTimeseries: [],
+  allUptimeTimeseries: [],
+  allResponseTimeTimeseries: [],
   currentPeriod: 'day' as const,
   selectedEndpointId: null,
   isLoading: false,
@@ -184,6 +196,32 @@ export const useStatisticsStore = create<StatisticsState>((set, get) => ({
       set({ statusDistribution: distribution, isLoading: false })
     } catch (error) {
       const message = error instanceof Error ? error.message : '상태 분포 조회 실패'
+      set({ error: message, isLoading: false })
+      throw error
+    }
+  },
+
+  // 전체 엔드포인트 가동률 시계열 조회
+  fetchAllUptimeTimeseries: async (period = 'hourly' as 'hourly' | 'daily', hours = 24) => {
+    set({ isLoading: true, error: null })
+    try {
+      const result = await statisticsService.getAllUptimeTimeseries(period, hours)
+      set({ allUptimeTimeseries: result.data, isLoading: false })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '전체 가동률 시계열 조회 실패'
+      set({ error: message, isLoading: false })
+      throw error
+    }
+  },
+
+  // 전체 엔드포인트 응답 시간 시계열 조회
+  fetchAllResponseTimeTimeseries: async (period = 'hourly' as 'hourly' | 'daily', hours = 24) => {
+    set({ isLoading: true, error: null })
+    try {
+      const result = await statisticsService.getAllResponseTimeTimeseries(period, hours)
+      set({ allResponseTimeTimeseries: result.data, isLoading: false })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '전체 응답 시간 시계열 조회 실패'
       set({ error: message, isLoading: false })
       throw error
     }

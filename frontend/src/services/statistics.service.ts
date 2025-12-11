@@ -198,6 +198,63 @@ class StatisticsService {
       throw error
     }
   }
+
+  /**
+   * 전체 엔드포인트의 가동률 시계열 데이터 조회
+   * @param period 기간 ('hourly' | 'daily')
+   * @param hours 시간 범위 (기본값: 24)
+   * @returns 시간대별 가동률 데이터
+   */
+  async getAllUptimeTimeseries(
+    period: 'hourly' | 'daily' = 'hourly',
+    hours: number = 24
+  ): Promise<{
+    period: string
+    hours: number
+    data: Array<{ timestamp: string; value: number }>
+    average: number
+    generatedAt: string
+  }> {
+    try {
+      const response = await apiClient.get('/statistics/uptime/timeseries', {
+        params: { period, hours },
+      })
+      return response.data
+    } catch (error) {
+      console.error('Failed to fetch all uptime timeseries:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 전체 엔드포인트의 응답 시간 시계열 데이터 조회
+   * @param period 기간 ('hourly' | 'daily')
+   * @param hours 시간 범위 (기본값: 24)
+   * @returns 시간대별 응답 시간 데이터
+   */
+  async getAllResponseTimeTimeseries(
+    period: 'hourly' | 'daily' = 'hourly',
+    hours: number = 24
+  ): Promise<{
+    period: string
+    hours: number
+    data: Array<{ timestamp: string; value: number }>
+    average: number
+    min: number
+    max: number
+    p95: number
+    generatedAt: string
+  }> {
+    try {
+      const response = await apiClient.get('/statistics/response-time/timeseries', {
+        params: { period, hours },
+      })
+      return response.data
+    } catch (error) {
+      console.error('Failed to fetch all response time timeseries:', error)
+      throw error
+    }
+  }
 }
 
 export default new StatisticsService()
