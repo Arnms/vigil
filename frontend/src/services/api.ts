@@ -3,7 +3,7 @@ import type { AxiosInstance, AxiosError, AxiosResponse } from 'axios'
 
 // API 클라이언트 인스턴스 생성
 const apiClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
