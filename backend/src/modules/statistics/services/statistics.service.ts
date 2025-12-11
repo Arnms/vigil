@@ -22,6 +22,13 @@ import {
   IncidentListResponse,
   IncidentDetailResponse,
 } from '../dto/incident-query.dto';
+import { TimeseriesQueryDto, TimeseriesPeriod } from '../dto/timeseries-query.dto';
+import { StatusDistributionResponseDto } from '../dto/status-distribution.dto';
+import {
+  UptimeTimeseriesResponseDto,
+  ResponseTimeTimeseriesResponseDto,
+  TimeseriesDataPointDto,
+} from '../dto/timeseries-response.dto';
 import { CheckResult } from '../../health-check/check-result.entity';
 import { Endpoint } from '../../endpoint/endpoint.entity';
 import { Incident } from '../../incident/incident.entity';
@@ -333,5 +340,177 @@ export class StatisticsService {
         startedAt: MoreThan(twentyFourHoursAgo),
       },
     });
+  }
+
+  /**
+   * 전체 엔드포인트 상태 분포 조회
+   */
+  async getStatusDistribution(): Promise<StatusDistributionResponseDto> {
+    const cacheKey = 'status-distribution:all';
+    const cached =
+      await this.cacheManager.get<StatusDistributionResponseDto>(cacheKey);
+    if (cached) return cached;
+
+    try {
+      const results = await this.endpointRepository
+        .createQueryBuilder('e')
+        .select('e.currentStatus', 'status')
+        .addSelect('COUNT(*)', 'count')
+        .groupBy('e.currentStatus')
+        .getRawMany();
+
+      const distribution: StatusDistributionResponseDto = {
+        UP: 0,
+        DOWN: 0,
+        DEGRADED: 0,
+        UNKNOWN: 0,
+        total: 0,
+        generatedAt: new Date(),
+      };
+
+      results.forEach((r) => {
+        const count = parseInt(r.count);
+        distribution[r.status] = count;
+        distribution.total += count;
+      });
+
+      // 캐싱 (30초)
+      await this.cacheManager.set(cacheKey, distribution, 30);
+
+      return distribution;
+    } catch (error) {
+      this.logger.error('상태 분포 조회 실패', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 전체 엔드포인트 가동률 시계열 조회
+   */
+  async getUptimeTimeseries(
+    query: TimeseriesQueryDto,
+  ): Promise<UptimeTimeseriesResponseDto> {
+    const period = query.period || TimeseriesPeriod.HOURLY;
+    const hours = query.hours || 24;
+    const cacheKey = `uptime-timeseries:${period}:${hours}`;
+    const cached =
+      await this.cacheManager.get<UptimeTimeseriesResponseDto>(cacheKey);
+    if (cached) return cached;
+
+    try {
+      const startTime = new Date(Date.now() - hours * 60 * 60 * 1000);
+      const truncFormat = period === TimeseriesPeriod.HOURLY ? 'hour' : 'day';
+
+      // PostgreSQL DATE_TRUNC을 사용한 시계열 집계
+      const results = await this.checkResultRepository
+        .createQueryBuilder('cr')
+        .select(`DATE_TRUNC('${truncFormat}', cr.checkedAt)`, 'time_bucket')
+        .addSelect(
+          `(COUNT(*) FILTER (WHERE cr.status = 'success') * 100.0 / COUNT(*))`,
+          'uptime',
+        )
+        .where('cr.checkedAt >= :startTime', { startTime })
+        .groupBy('time_bucket')
+        .orderBy('time_bucket', 'ASC')
+        .getRawMany();
+
+      // 데이터 포인트 변환
+      const dataPoints: TimeseriesDataPointDto[] = results.map((r) => ({
+        timestamp: new Date(r.time_bucket),
+        value: parseFloat(r.uptime) || 0,
+      }));
+
+      // 평균 계산
+      const average =
+        dataPoints.length > 0
+          ? dataPoints.reduce((sum, point) => sum + point.value, 0) /
+            dataPoints.length
+          : 0;
+
+      const response: UptimeTimeseriesResponseDto = {
+        period,
+        hours,
+        data: dataPoints,
+        average: Math.round(average * 100) / 100,
+        generatedAt: new Date(),
+      };
+
+      // 캐싱 (60초)
+      await this.cacheManager.set(cacheKey, response, 60);
+
+      return response;
+    } catch (error) {
+      this.logger.error('가동률 시계열 조회 실패', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 전체 엔드포인트 응답 시간 시계열 조회
+   */
+  async getResponseTimeTimeseries(
+    query: TimeseriesQueryDto,
+  ): Promise<ResponseTimeTimeseriesResponseDto> {
+    const period = query.period || TimeseriesPeriod.HOURLY;
+    const hours = query.hours || 24;
+    const cacheKey = `response-time-timeseries:${period}:${hours}`;
+    const cached =
+      await this.cacheManager.get<ResponseTimeTimeseriesResponseDto>(cacheKey);
+    if (cached) return cached;
+
+    try {
+      const startTime = new Date(Date.now() - hours * 60 * 60 * 1000);
+      const truncFormat = period === TimeseriesPeriod.HOURLY ? 'hour' : 'day';
+
+      // PostgreSQL DATE_TRUNC을 사용한 시계열 집계
+      const results = await this.checkResultRepository
+        .createQueryBuilder('cr')
+        .select(`DATE_TRUNC('${truncFormat}', cr.checkedAt)`, 'time_bucket')
+        .addSelect('AVG(cr.responseTime)', 'avg_response_time')
+        .where('cr.checkedAt >= :startTime', { startTime })
+        .andWhere('cr.status = :status', { status: 'success' })
+        .groupBy('time_bucket')
+        .orderBy('time_bucket', 'ASC')
+        .getRawMany();
+
+      // 데이터 포인트 변환
+      const dataPoints: TimeseriesDataPointDto[] = results.map((r) => ({
+        timestamp: new Date(r.time_bucket),
+        value: parseFloat(r.avg_response_time) || 0,
+      }));
+
+      // 통계 계산
+      const values = dataPoints.map((p) => p.value);
+      const average =
+        values.length > 0
+          ? values.reduce((sum, val) => sum + val, 0) / values.length
+          : 0;
+      const min = values.length > 0 ? Math.min(...values) : 0;
+      const max = values.length > 0 ? Math.max(...values) : 0;
+
+      // P95 계산
+      const sortedValues = [...values].sort((a, b) => a - b);
+      const p95Index = Math.ceil(sortedValues.length * 0.95) - 1;
+      const p95 = sortedValues.length > 0 ? sortedValues[p95Index] || 0 : 0;
+
+      const response: ResponseTimeTimeseriesResponseDto = {
+        period,
+        hours,
+        data: dataPoints,
+        average: Math.round(average * 100) / 100,
+        min: Math.round(min * 100) / 100,
+        max: Math.round(max * 100) / 100,
+        p95: Math.round(p95 * 100) / 100,
+        generatedAt: new Date(),
+      };
+
+      // 캐싱 (60초)
+      await this.cacheManager.set(cacheKey, response, 60);
+
+      return response;
+    } catch (error) {
+      this.logger.error('응답 시간 시계열 조회 실패', error);
+      throw error;
+    }
   }
 }

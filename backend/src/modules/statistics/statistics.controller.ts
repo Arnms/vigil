@@ -11,6 +11,7 @@ import { StatisticsService } from './services/statistics.service';
 import { UptimeQueryDto } from './dto/uptime-query.dto';
 import { ResponseTimeQueryDto } from './dto/response-time-query.dto';
 import { IncidentQueryDto } from './dto/incident-query.dto';
+import { TimeseriesQueryDto } from './dto/timeseries-query.dto';
 
 @Controller('api/statistics')
 @ApiTags('Statistics')
@@ -69,5 +70,29 @@ export class StatisticsController {
   @ApiOperation({ summary: '엔드포인트 성능 비교' })
   async getComparison() {
     return await this.statisticsService.getComparison();
+  }
+
+  // 7. 전체 엔드포인트 상태 분포
+  @Get('status-distribution')
+  @HttpCode(200)
+  @ApiOperation({ summary: '전체 엔드포인트 상태 분포 조회' })
+  async getStatusDistribution() {
+    return await this.statisticsService.getStatusDistribution();
+  }
+
+  // 8. 전체 가동률 시계열
+  @Get('uptime/timeseries')
+  @HttpCode(200)
+  @ApiOperation({ summary: '전체 엔드포인트 가동률 시계열 조회' })
+  async getUptimeTimeseries(@Query() query: TimeseriesQueryDto) {
+    return await this.statisticsService.getUptimeTimeseries(query);
+  }
+
+  // 9. 전체 응답 시간 시계열
+  @Get('response-time/timeseries')
+  @HttpCode(200)
+  @ApiOperation({ summary: '전체 엔드포인트 응답 시간 시계열 조회' })
+  async getResponseTimeTimeseries(@Query() query: TimeseriesQueryDto) {
+    return await this.statisticsService.getResponseTimeTimeseries(query);
   }
 }
