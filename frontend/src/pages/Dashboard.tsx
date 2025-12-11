@@ -137,11 +137,11 @@ export default function Dashboard() {
         />
         <StatusCard
           title="전체 가동률"
-          value={(avgUptime * 100).toFixed(2)}
+          value={avgUptime.toFixed(2)}
           unit="%"
           icon="📊"
           color="blue"
-          trend={avgUptime >= 0.99 ? 'up' : avgUptime >= 0.95 ? 'stable' : 'down'}
+          trend={avgUptime >= 99 ? 'up' : avgUptime >= 95 ? 'stable' : 'down'}
         />
         <StatusCard
           title="활성 인시던트"
