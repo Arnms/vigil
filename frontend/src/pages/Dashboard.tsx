@@ -90,13 +90,13 @@ export default function Dashboard() {
 
   // 가동률 차트 데이터 변환 (엔드포인트의 현재 상태 기반)
   const uptimeChartData = endpoints.map((endpoint) => {
-    // 현재 상태 기반 대략적인 가동률 표시
+    // 현재 상태 기반 대략적인 가동률 표시 (0-100 범위)
     const estimatedUptime =
       endpoint.currentStatus === 'UP'
-        ? 0.99
+        ? 99
         : endpoint.currentStatus === 'DEGRADED'
-          ? 0.85
-          : 0.5
+          ? 85
+          : 50
 
     return {
       name: endpoint.name,

@@ -9,8 +9,8 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: '대시보드', icon: '🏠', path: '/' },
   { label: '엔드포인트', icon: '📡', path: '/endpoints' },
-  { label: '인시던트', icon: '🚨', path: '/incidents' },
-  { label: '통계', icon: '📊', path: '/statistics' },
+  // { label: '인시던트', icon: '🚨', path: '/incidents' },
+  // { label: '통계', icon: '📊', path: '/statistics' },
 ]
 
 export default function Sidebar() {

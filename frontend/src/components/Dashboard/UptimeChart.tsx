@@ -11,9 +11,9 @@ interface UptimeChartProps {
 }
 
 const getUptimeColor = (uptime: number) => {
-  if (uptime >= 0.99) return '#10b981' // 초록색 - 99% 이상
-  if (uptime >= 0.95) return '#84cc16' // 라임색 - 95% 이상
-  if (uptime >= 0.9) return '#f59e0b' // 주황색 - 90% 이상
+  if (uptime >= 99) return '#10b981' // 초록색 - 99% 이상
+  if (uptime >= 95) return '#84cc16' // 라임색 - 95% 이상
+  if (uptime >= 90) return '#f59e0b' // 주황색 - 90% 이상
   return '#ef4444' // 빨간색 - 90% 미만
 }
 
@@ -61,7 +61,7 @@ export default function UptimeChart({ data, isLoading }: UptimeChartProps) {
               border: '1px solid #e5e7eb',
               borderRadius: '0.5rem',
             }}
-            formatter={(value) => `${((value as number) * 100).toFixed(2)}%`}
+            formatter={(value) => `${(value as number).toFixed(2)}%`}
           />
           <Legend />
           <Bar dataKey="uptime" name="가동률" radius={[8, 8, 0, 0]}>
