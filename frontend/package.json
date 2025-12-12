@@ -19,7 +19,6 @@
     "e2e:report": "playwright show-report"
   },
   "dependencies": {
-    "@rollup/rollup-win32-x64-msvc": "^4.53.1",
     "axios": "^1.13.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
