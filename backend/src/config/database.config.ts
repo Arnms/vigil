@@ -2,7 +2,7 @@ import { registerAs } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 export default registerAs('database', (): TypeOrmModuleOptions => {
-  return {
+  const config: TypeOrmModuleOptions = {
     type: 'postgres',
     host: process.env.DATABASE_HOST || 'localhost',
     port: parseInt(process.env.DATABASE_PORT || '5432', 10),
@@ -14,4 +14,13 @@ export default registerAs('database', (): TypeOrmModuleOptions => {
     logging: process.env.NODE_ENV === 'development',
     autoLoadEntities: true,
   };
+
+  // Render PostgreSQL requires SSL in production
+  if (process.env.NODE_ENV === 'production') {
+    config.ssl = {
+      rejectUnauthorized: false,
+    };
+  }
+
+  return config;
 });

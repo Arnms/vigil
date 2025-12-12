@@ -1,0 +1,96 @@
+# Render Blueprint for Vigil API Monitoring Dashboard
+# This file enables Infrastructure as Code deployment on Render.com
+
+databases:
+  - name: vigil-postgres-demo
+    databaseName: vigil
+    user: vigil_user
+    plan: free
+    region: singapore
+
+services:
+  # Backend API Service
+  - type: web
+    name: vigil-backend-demo
+    runtime: node
+    region: singapore
+    plan: free
+    branch: main
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vigil-postgres-demo
+          property: connectionString
+      - key: DATABASE_HOST
+        fromDatabase:
+          name: vigil-postgres-demo
+          property: host
+      - key: DATABASE_PORT
+        fromDatabase:
+          name: vigil-postgres-demo
+          property: port
+      - key: DATABASE_USER
+        fromDatabase:
+          name: vigil-postgres-demo
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: vigil-postgres-demo
+          property: password
+      - key: DATABASE_NAME
+        fromDatabase:
+          name: vigil-postgres-demo
+          property: database
+      - key: REDIS_HOST
+        sync: false  # Set manually in Render Dashboard
+      - key: REDIS_PORT
+        value: 6379
+      - key: REDIS_PASSWORD
+        sync: false  # Set manually in Render Dashboard
+      - key: REDIS_TLS
+        value: true
+      - key: CORS_ORIGIN
+        value: https://vigil-frontend-demo.onrender.com
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_SECURE
+        value: false
+      - key: SMTP_USER
+        sync: false  # Set manually in Render Dashboard
+      - key: SMTP_PASS
+        sync: false  # Set manually in Render Dashboard
+      - key: SMTP_FROM
+        value: noreply@vigil-demo.com
+
+  # Frontend Static Site
+  - type: web
+    name: vigil-frontend-demo
+    runtime: static
+    region: singapore
+    plan: free
+    branch: main
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://vigil-backend-demo.onrender.com
+      - key: VITE_WS_URL
+        value: https://vigil-backend-demo.onrender.com

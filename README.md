@@ -77,7 +77,69 @@ npm run start:dev
 
 5. **애플리케이션 접속**
 - Backend API: http://localhost:3000
+- Frontend: http://localhost:5173
 - API Documentation: http://localhost:3000/api (예정)
+
+## 배포하기 (Render.com + Upstash Redis)
+
+무료 플랫폼을 사용하여 데모 버전을 배포할 수 있습니다.
+
+### 배포 플랫폼
+
+- **Render.com**: 백엔드, 프론트엔드, PostgreSQL (Free tier)
+- **Upstash**: Redis 캐싱 및 큐 (Free tier, 10,000 commands/day)
+
+### 빠른 배포 가이드
+
+1. **Upstash Redis 설정**
+   - [Upstash Console](https://console.upstash.com/)에서 계정 생성
+   - Regional Redis 데이터베이스 생성
+   - 연결 정보 저장 (Host, Port, Password)
+
+2. **Render.com 설정**
+   - [Render.com](https://render.com/)에서 GitHub 계정으로 로그인
+   - 저장소 연결 권한 부여
+
+3. **Blueprint로 자동 배포** (권장)
+   ```bash
+   # 저장소 루트의 render.yaml 파일 사용
+   # Render Dashboard에서 "New" -> "Blueprint" 선택
+   # 저장소 선택 시 자동으로 설정 적용
+   ```
+
+4. **환경 변수 설정**
+   - Render Dashboard에서 각 서비스의 Environment 탭 이동
+   - Upstash Redis 연결 정보 입력:
+     - `REDIS_HOST`: Upstash Redis Host
+     - `REDIS_PASSWORD`: Upstash Redis Token
+     - `REDIS_TLS`: `true`
+   - 기타 필요한 환경 변수 설정 (SMTP, Slack 등)
+
+5. **배포 확인**
+   - 백엔드 Health Check: `https://your-backend.onrender.com/health`
+   - 프론트엔드 접속: `https://your-frontend.onrender.com`
+
+### 상세 배포 가이드
+
+자세한 배포 절차는 [workflows/10-demo-deployment.md](workflows/10-demo-deployment.md) 문서를 참고하세요.
+
+**포함 내용:**
+- 단계별 배포 프로세스
+- 환경 변수 설정 가이드
+- 배포 후 검증 방법
+- 문제 해결 팁
+- Free tier 제한사항 및 해결책
+
+### 배포 체크리스트
+
+- [ ] Upstash Redis 데이터베이스 생성 완료
+- [ ] Render PostgreSQL 데이터베이스 생성 완료
+- [ ] 백엔드 Web Service 배포 완료
+- [ ] 프론트엔드 Static Site 배포 완료
+- [ ] 모든 환경 변수 설정 완료
+- [ ] Health Check API 정상 응답 확인
+- [ ] WebSocket 연결 "연결됨" 상태 확인
+- [ ] 엔드포인트 생성 및 자동 헬스 체크 동작 확인
 
 ## 프로젝트 구조
 
